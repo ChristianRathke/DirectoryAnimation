@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpSession;
 
 import de.hdm.animation.DirectoryAnimation;
 
@@ -19,7 +18,7 @@ public class SpreadDirectory extends AnimationServlet {
         return "sourceDirectory";
     }
     
-    void workWith(File tmpDir, File dir, HttpSession session) throws IOException {
+    void workWith(File tmpDir, File dir) throws IOException {
         if (tmpDir.exists()) {
             for (File file : tmpDir.listFiles()) {
                 delete(file);
@@ -28,11 +27,8 @@ public class SpreadDirectory extends AnimationServlet {
             tmpDir.mkdir();
         }
         
-        copy(dir, tmpDir);  
-        
-        DirectoryAnimation animation = new DirectoryAnimation(tmpDir.getAbsolutePath());
-        animation.spreadDir();
-        session.setAttribute("animation", animation);        
+        copy(dir, tmpDir);          
+        shareSpace().spreadDir(tmpDir);
 
     }
 

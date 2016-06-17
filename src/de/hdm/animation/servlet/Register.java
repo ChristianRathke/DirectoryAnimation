@@ -1,8 +1,11 @@
 package de.hdm.animation.servlet;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -10,10 +13,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import com.google.zxing.WriterException;
-
-import de.hdm.animation.GenerateQRCode;
 
 /**
  * Servlet implementation class Register
@@ -43,6 +42,19 @@ public class Register extends HttpServlet {
 	    
 	    Cookie sourceCookie = new Cookie("sourceDirectory", request.getParameter("sourceDirectory"));
         Cookie destCookie = new Cookie("destinationDirectory", request.getParameter("destinationDirectory"));
+        
+        if (sourceCookie.getValue().equals("")) {
+            Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+            String text;
+            try {
+                text = (String)clpbrd.getData(DataFlavor.stringFlavor);
+                sourceCookie.setValue(text);
+            } catch (UnsupportedFlavorException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        
 	    response.addCookie(sourceCookie);
 	    response.addCookie(destCookie);
 	    
@@ -51,6 +63,8 @@ public class Register extends HttpServlet {
         String docType = "<!doctype html public \"-//w3c//dtd html 4.0 " + "transitional//en\">\n";
         out.println(docType);
         out.println("<html><body>");
+        out.println("Source directory " + sourceCookie.getValue() + " remembered.<br>");
+        out.println("Destination directory " + destCookie.getValue() + " remembered.<br>");
 
 /*
  *      String host = InetAddress.getLocalHost().getHostAddress();
@@ -67,10 +81,8 @@ public class Register extends HttpServlet {
             e.printStackTrace();
         }
         out.println();
-        out.println("Source directory " + request.getParameter("sourceDirectory") + " remembered.<br>");
         out.println("<img src=\"data:image/jpg;base64," + sourceDirQrCode + "\">");
         out.println();
-        out.println("Destination directory " + request.getParameter("destinationDirectory") + " remembered.<br>");
         out.println("<img src=\"data:image/jpg;base64," + destDirQrCode + "\">");
 */        
         out.println("</body>");

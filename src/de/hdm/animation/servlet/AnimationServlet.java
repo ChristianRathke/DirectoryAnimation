@@ -1,7 +1,5 @@
 package de.hdm.animation.servlet;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -10,22 +8,34 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 
-import javax.imageio.ImageIO;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
-import sun.misc.BASE64Encoder;
+import de.hdm.animation.ShareSpace;
 
 /**
  * Servlet implementation class Register
  */
 public abstract class AnimationServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static ShareSpace shareSpace = null;
+    
+    public static ShareSpace shareSpace() {
+        if (shareSpace == null) {
+            shareSpace = new ShareSpace();
+        }
+        return shareSpace;
+    }
 
+    public void destroy() {
+        if (shareSpace != null) {
+            shareSpace.remove();
+        }
+        super.destroy();
+    }
     /**
      * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse
      *      response)
@@ -64,14 +74,14 @@ public abstract class AnimationServlet extends HttpServlet {
         out.println("</html>");
         
         File tmpDir = new File(System.getProperty("java.io.tmpdir") + "/animation");
-        workWith(tmpDir, dir, request.getSession());  
+        workWith(tmpDir, dir);  
 
         out.close();    
 
     }
     
     abstract String getDirectoryCookieName();
-    abstract void workWith(File tmpDir, File dir, HttpSession session) throws IOException;
+    abstract void workWith(File tmpDir, File dir) throws IOException;
         
     void copy(File sourceLocation, File targetLocation) throws IOException {
         if (sourceLocation.isDirectory()) {

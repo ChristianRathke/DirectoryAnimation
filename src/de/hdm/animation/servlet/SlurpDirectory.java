@@ -4,10 +4,8 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpSession;
 
 import de.hdm.animation.DirectoryAnimation;
-import de.hdm.animation.DirectoryAnimationPanel;
 
 /**
  * Servlet implementation class Register
@@ -20,7 +18,7 @@ public class SlurpDirectory extends AnimationServlet {
         return "destinationDirectory";
     }
     
-    void workWith(File tmpDir, File dir, HttpSession session) throws IOException {
+    void workWith(File tmpDir, File dir) throws IOException {
         if (!tmpDir.exists()) {
             return;
         }
@@ -28,13 +26,8 @@ public class SlurpDirectory extends AnimationServlet {
             dir.mkdirs();
         }
 
-        copy(tmpDir, dir);
-        
-        DirectoryAnimation animation = (DirectoryAnimation)session.getAttribute("animation");
-        if (animation == null){
-            animation = new DirectoryAnimation(tmpDir.getAbsolutePath());
-        }
-        animation.shrinkDir();       
+        copy(tmpDir, dir);          
+        shareSpace().shrinkDir(tmpDir);
 
     }
 
