@@ -6,15 +6,17 @@ package de.hdm.animation;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
-import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-
-import sun.awt.shell.ShellFolder;
+import javax.swing.TransferHandler;
 
 public class DirectoryAnimationPanel extends JPanel {
 
@@ -22,14 +24,17 @@ public class DirectoryAnimationPanel extends JPanel {
      * 
      */
     private static final long serialVersionUID = 1L;
-    int delay = 100;
-    int distanceX = 100;
-    int distanceY = 100;
+    int delay = 10;
+    int distanceX = 80;
+    int distanceY = 80;
 
+    File directory = null;
     JFrame display = null;
-    JLabel[] fileLabels = null;
+    FileLabel[] fileLabels = null;
     Point[] positions = null;
-    Point source = new Point(-100, -100);
+    Point source = null;
+    
+    private FileLabelTransferHandler transferHandler = new FileLabelTransferHandler();
 
     public DirectoryAnimationPanel() {
 
@@ -40,8 +45,9 @@ public class DirectoryAnimationPanel extends JPanel {
         setLayout(null);
         setBackground(new Color(100, 100, 100, 0));
         setVisible(true);
-        
-        source.setLocation(getWidth()/2, getHeight()/2);
+
+        source = //new Point(getWidth() / 2, getHeight() / 2);
+                new Point(-100, -100);
     }
 
     public void setDirectory(String dirName) {
@@ -50,19 +56,26 @@ public class DirectoryAnimationPanel extends JPanel {
 
     public void setDirectory(File directory) {
 
+        this.directory = directory;
+        if (directory.isDirectory()) {
+            setTransferHandler(new FileTransferHandler(directory, this));
+            reset();
+        }
+    }
+
+    public void reset() {
         removeAll();
 
-        if (directory.isDirectory()) {
-            File[] files = directory.listFiles();
-            generateFileLabels(files);
-            generatePositions(files);
+        File[] files = directory.listFiles();
 
-//            int length = (int) Math.round(Math.sqrt(files.length)) + 1;
-//            // 10;
-//            setSize(100 * length, 100 * length);
-//            setPreferredSize(getSize());
-            display.repaint();
-        }
+        generateFileLabels(files);
+        generatePositions(files);
+
+        // int length = (int) Math.round(Math.sqrt(files.length)) + 1;
+        // // 10;
+        // setSize(100 * length, 100 * length);
+        // setPreferredSize(getSize());
+        display.repaint();
     }
 
     public void setFrame(JFrame frame) {
@@ -81,8 +94,8 @@ public class DirectoryAnimationPanel extends JPanel {
 
     public void spreadDir() {
         try {
-            for (int i = 0; i < fileLabels.length; i++) {
-                fileLabels[i].setLocation(source);
+            for (FileLabel fileLabel : fileLabels) {
+                fileLabel.setLocation(source);
             }
             for (int i = 0; i < fileLabels.length; i++) {
                 new FileAnimation(fileLabels[i], positions[i], true).start();
@@ -99,7 +112,7 @@ public class DirectoryAnimationPanel extends JPanel {
             for (int i = 0; i < fileLabels.length; i++) {
                 fileLabels[i].setLocation(positions[i]);
             }
-            for (JLabel label : fileLabels) {
+            for (FileLabel label : fileLabels) {
                 new FileAnimation(label, source, false).start();
                 Thread.sleep(delay);
             }
@@ -110,31 +123,16 @@ public class DirectoryAnimationPanel extends JPanel {
     }
 
     private void generateFileLabels(File[] files) {
-        fileLabels = new JLabel[files.length];
+        fileLabels = new FileLabel[files.length];
         for (int i = 0; i < files.length; i++) {
             fileLabels[i] = generateFileLabel(files[i]);
         }
     }
 
-    private JLabel generateFileLabel(File file) {
-        ShellFolder sf = null;
-        try {
-            sf = ShellFolder.getShellFolder(file);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        if (sf.getIcon(true) == null)
-            return null;
-        ImageIcon imageIcon = new ImageIcon(sf.getIcon(true), sf.getFolderType());
-
-        JLabel label = new JLabel(file.getName());
-        label.setIcon(imageIcon);
-        label.setVerticalTextPosition(JLabel.BOTTOM);
-        label.setHorizontalTextPosition(JLabel.CENTER);
-        label.setSize(imageIcon.getIconWidth() + 20, imageIcon.getIconHeight() + 20);
-
+    private FileLabel generateFileLabel(File file) {
+        FileLabel label = new FileLabel(file);
+        label.setTransferHandler(transferHandler);
         add(label);
-
         return label;
     }
 
@@ -144,10 +142,11 @@ public class DirectoryAnimationPanel extends JPanel {
         int posY = 0;
         for (int i = 0; i < files.length; i++) {
             positions[i] = new Point(posX, posY);
-            posX += distanceX;
-            if (posX >= getWidth()) {
+            if (posX >= getWidth()- distanceX) {
                 posX = 0;
                 posY += distanceY;
+            } else {
+                posX += distanceX;
             }
         }
         return positions;
@@ -173,6 +172,7 @@ public class DirectoryAnimationPanel extends JPanel {
             double incrY = (goal.y - start.y) / 100.0;
             for (int i = 0; i <= 100; i++) {
                 label.setLocation(start.x + (int) (i * incrX), start.y + (int) (i * incrY));
+                label.setVisible(true);
                 display.repaint();
                 try {
                     Thread.sleep(10);
@@ -185,4 +185,58 @@ public class DirectoryAnimationPanel extends JPanel {
         }
 
     }
+
+    private class FileLabelTransferHandler extends TransferHandler {
+
+        /**
+         * serialVersionUID
+         */
+        public static final long serialVersionUID = -1L;
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return TransferHandler.COPY_OR_MOVE;
+        }
+
+        @Override
+        public Transferable createTransferable(JComponent c) {
+
+            Transferable tf = new Transferable() {
+
+                public boolean isDataFlavorSupported(DataFlavor flavor) {
+                    return flavor.equals(DataFlavor.javaFileListFlavor);
+                }
+
+                public DataFlavor[] getTransferDataFlavors() {
+                    DataFlavor[] dfs = new DataFlavor[1];
+                    dfs[0] = DataFlavor.javaFileListFlavor;
+                    return dfs;
+                }
+
+                public Object getTransferData(DataFlavor df) throws UnsupportedFlavorException, IOException {
+                    if (df.equals(DataFlavor.javaFileListFlavor)) {
+                        java.util.List<File> fileList = new java.util.ArrayList<File>();
+                        fileList.add(((FileLabel) c).getFile());
+                        return fileList;
+                    }
+                    throw new UnsupportedFlavorException(df);
+                }
+            };
+
+            return tf;
+
+        }
+
+        @Override
+        public void exportDone(JComponent c, Transferable t, int action) {
+            if (action != TransferHandler.COPY) {
+                FileLabel label = (FileLabel) c;
+                System.out.println("removing " + label.getFile());
+                label.getFile().delete();
+                reset();
+                spreadDir();
+            }
+        }
+    }
+
 }

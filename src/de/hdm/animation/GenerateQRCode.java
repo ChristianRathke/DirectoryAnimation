@@ -6,7 +6,9 @@ package de.hdm.animation;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Hashtable;
@@ -19,6 +21,8 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+
+import sun.misc.BASE64Encoder;
 
 public class GenerateQRCode {
     /**
@@ -67,6 +71,23 @@ public class GenerateQRCode {
             throws WriterException, IOException {
         BufferedImage image = createQRImage(qrCodeText, size);
         ImageIO.write(image, fileType, qrFile);
+    }
+    
+    public static String encodeToString(BufferedImage image, String fileType) {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        String imageString = "";
+        try {
+            ImageIO.write(image, fileType, bos);
+            byte[] imageBytes = bos.toByteArray();
+
+            BASE64Encoder encoder = new BASE64Encoder();
+            imageString = encoder.encode(imageBytes);
+
+            bos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return imageString;
     }
     
     

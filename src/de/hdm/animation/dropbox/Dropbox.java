@@ -44,11 +44,11 @@ public class Dropbox {
         }
 
         // Upload "test.txt" to Dropbox
-        try (InputStream in = new FileInputStream("test.txt")) {
-            FileMetadata metadata = client.files().uploadBuilder("/test.txt").uploadAndFinish(in);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+//        try (InputStream in = new FileInputStream("test.txt")) {
+//            FileMetadata metadata = client.files().uploadBuilder("/test.txt").uploadAndFinish(in);
+//        } catch (IOException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
     }
 }

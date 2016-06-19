@@ -5,80 +5,175 @@
 package de.hdm.animation;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-
-import com.google.zxing.WriterException;
+import javax.swing.JPanel;
 
 import sun.misc.BASE64Encoder;
 
-public class ShareSpace {
+public class ShareSpace extends JFrame {
 
-    private JFrame shareSpace = new JFrame("ShareSpace");
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     private DirectoryAnimationPanel dap = new DirectoryAnimationPanel();
-            
-    public ShareSpace() {
-        shareSpace.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        
-        String host="";
-        ImageIcon icon=null;
-        try {
-            host = InetAddress.getLocalHost().getHostAddress();
-            icon = new ImageIcon(
-                    GenerateQRCode.createQRImage("http://" + host + ":8080/DirectoryAnimation/SlurpDirectory", 200));
-            JLabel slurpQRLabel = new JLabel("Upload Files", icon, JLabel.CENTER);
-            slurpQRLabel.setVerticalTextPosition(JLabel.BOTTOM);
-            slurpQRLabel.setHorizontalTextPosition(JLabel.CENTER);
-            shareSpace.add(slurpQRLabel, BorderLayout.EAST);
-            
-            icon = new ImageIcon(
-                    GenerateQRCode.createQRImage("http://" + host + ":8080/DirectoryAnimation/SpreadDirectory", 200));
-            JLabel spreadQRLabel = new JLabel("Download Files", icon, JLabel.CENTER);
-            spreadQRLabel.setVerticalTextPosition(JLabel.BOTTOM);
-            spreadQRLabel.setHorizontalTextPosition(JLabel.CENTER);
-            shareSpace.add(spreadQRLabel, BorderLayout.WEST);
-        } catch (UnknownHostException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (WriterException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+    private String directory = "";
+    private File animationDir = new File(System.getProperty("java.io.tmpdir") + "/animation");
+    private JButton download = new JButton("Download");
+    private JButton upload = new JButton("Upload");
+    private boolean isSpread = false;
 
-        shareSpace.add(dap, BorderLayout.CENTER);
-        dap.setFrame(shareSpace);
+    public ShareSpace() {
+        super("ShareSpace");
+        dap.setFrame(this);
+        dap.setDirectory(animationDir);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         
-        shareSpace.setLocationRelativeTo(null);
-        shareSpace.pack();
-        shareSpace.setVisible(true);
+
+        add(dap, BorderLayout.CENTER);
+        if (!animationDir.exists()) {
+            animationDir.mkdirs();
+        }
+        
+        initializeButtonPanel();
+
+        pack();
+        setLocationRelativeTo(null);
+        setBackground(Color.white);
+        setVisible(true);
     }
-    
+
     public static void main(String[] args) {
         new ShareSpace();
     }
-    
+
     public void remove() {
-        shareSpace.setVisible(false);
-        shareSpace.dispose();
+        setVisible(false);
+        dispose();
     }
     
-    public void spreadDir(File directory) {
-        dap.setDirectory(directory);
+    private void initializeButtonPanel() {
+        JPanel comPanel = new JPanel();
+        download.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                spreadDir();
+            }
+        });
+
+        upload.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                shrinkDir();
+            }
+        });
+        
+        comPanel.setLayout(new BoxLayout(comPanel, BoxLayout.X_AXIS));
+        comPanel.add(upload);
+        JButton button = new JButton(" ");
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                if (isSpread) {
+                    dap.shrinkDir();
+                } else {
+                    dap.spreadDir();
+                }
+                isSpread = !isSpread;
+            }
+        });
+        comPanel.add(button);
+        
+        comPanel.add(download);
+        add(comPanel, BorderLayout.NORTH);
+    }
+
+    public void setDirectory(String dir) {
+        if (dir != null) {
+            directory = dir;
+            download.setText("Download from " + directory);
+            download.invalidate();
+            upload.setText("Upload to " + directory);
+            upload.invalidate();
+        }
+        pack();
+    }
+
+    public void spreadDir() {
+        try {
+            copy(new File(directory), animationDir);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         dap.spreadDir();
+        isSpread = true;
     }
-    
-    public void shrinkDir(File directory) {
-        dap.setDirectory(directory);
+
+    public void shrinkDir() {
+        try {
+            copy(animationDir, new File(directory));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         dap.shrinkDir();
+        isSpread = false;
+    }
+
+    void copy(File sourceLocation, File targetLocation) throws IOException {
+        if (sourceLocation.isDirectory()) {
+            copyDirectory(sourceLocation, targetLocation);
+        } else {
+            copyFile(sourceLocation, targetLocation);
+        }
+    }
+
+    void copyDirectory(File source, File target) throws IOException {
+        if (!target.exists()) {
+            target.mkdir();
+        }
+
+        for (String f : source.list()) {
+            copy(new File(source, f), new File(target, f));
+        }
+    }
+
+    void copyFile(File source, File target) throws IOException {
+        try (InputStream in = new FileInputStream(source); OutputStream out = new FileOutputStream(target)) {
+            byte[] buf = new byte[1024];
+            int length;
+            while ((length = in.read(buf)) > 0) {
+                out.write(buf, 0, length);
+            }
+        }
+    }
+
+    void delete(File file) {
+        if (file.isDirectory()) {
+            deleteDirectory(file);
+        } else {
+            file.delete();
+        }
+    }
+
+    void deleteDirectory(File dir) {
+        for (File file : dir.listFiles()) {
+            delete(file);
+        }
+        dir.delete();
     }
 
     public String encodeToString(BufferedImage image, String type) {

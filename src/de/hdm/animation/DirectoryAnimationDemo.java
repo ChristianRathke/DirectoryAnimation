@@ -5,10 +5,11 @@
 package de.hdm.animation;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 
 import javax.swing.JFrame;
 
-public class DirectoryAnimation extends JFrame {
+public class DirectoryAnimationDemo extends JFrame {
     
     /**
      * 
@@ -16,7 +17,7 @@ public class DirectoryAnimation extends JFrame {
     private static final long serialVersionUID = 1L;
     private DirectoryAnimationPanel dap = new DirectoryAnimationPanel();
 
-    public DirectoryAnimation(String directory) {
+    public DirectoryAnimationDemo(String directory) {
 
         super(directory);
         dap.setFrame(this);
@@ -29,24 +30,23 @@ public class DirectoryAnimation extends JFrame {
 //                setVisible(false);
 //            }
 //        });
-        //frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         add(dap, BorderLayout.CENTER);
         pack();
         setLocationRelativeTo(null);
+        setBackground(Color.white);
         setVisible(true);
-        toFront();
     }
     
     
     
     public static void main(String[] args) {
-        DirectoryAnimation da = new DirectoryAnimation(args.length > 0 ? args[0] : ".\\");
+        DirectoryAnimationDemo da = new DirectoryAnimationDemo(args.length > 0 ? args[0] : ".\\");
         try {
             da.spreadDir();
             Thread.sleep(2000);
             da.shrinkDir();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

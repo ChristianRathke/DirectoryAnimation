@@ -6,6 +6,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -13,6 +14,10 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import com.google.zxing.WriterException;
+
+import de.hdm.animation.GenerateQRCode;
 
 /**
  * Servlet implementation class Register
@@ -40,51 +45,35 @@ public class Register extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	    
-	    Cookie sourceCookie = new Cookie("sourceDirectory", request.getParameter("sourceDirectory"));
-        Cookie destCookie = new Cookie("destinationDirectory", request.getParameter("destinationDirectory"));
+	    String directory = request.getParameter("directory");
+	    if (directory == null) {
+	        directory = "";
+	    }
+	    Cookie dirCookie = new Cookie("directory", directory);
         
-        if (sourceCookie.getValue().equals("")) {
+        if (dirCookie.getValue().equals("")) {
             Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
-            String text;
             try {
-                text = (String)clpbrd.getData(DataFlavor.stringFlavor);
-                sourceCookie.setValue(text);
+                dirCookie.setValue((String)clpbrd.getData(DataFlavor.stringFlavor));
             } catch (UnsupportedFlavorException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
         
-	    response.addCookie(sourceCookie);
-	    response.addCookie(destCookie);
+	    response.addCookie(dirCookie);
 	    
 	    response.setContentType("text/html");
         PrintWriter out = response.getWriter();
         String docType = "<!doctype html public \"-//w3c//dtd html 4.0 " + "transitional//en\">\n";
         out.println(docType);
         out.println("<html><body>");
-        out.println("Source directory " + sourceCookie.getValue() + " remembered.<br>");
-        out.println("Destination directory " + destCookie.getValue() + " remembered.<br>");
+        out.println("Directory " + dirCookie.getValue() + " remembered on your device.<br><br>");
 
-/*
- *      String host = InetAddress.getLocalHost().getHostAddress();
-        String sourceDirQrCode="";
-        String destDirQrCode="";
-        try {
-            sourceDirQrCode = GenerateQRCode.encodeToString(
-                    GenerateQRCode.createQRImage("http://" + host + ":8080/DirectoryAnimationPanel/SpreadDirectory", 200),
-                    "jpg");
-            destDirQrCode = GenerateQRCode.encodeToString(
-                    GenerateQRCode.createQRImage("http://" + host + ":8080/DirectoryAnimationPanel/SlurpDirectory", 200),
-                    "jpg");
-        } catch (WriterException e) {
-            e.printStackTrace();
-        }
-        out.println();
-        out.println("<img src=\"data:image/jpg;base64," + sourceDirQrCode + "\">");
-        out.println();
-        out.println("<img src=\"data:image/jpg;base64," + destDirQrCode + "\">");
-*/        
+        out.println("<form action=\"ShareFolder\" method=\"Post\">");
+        out.println("Sharing folder: <input type=\"submit\" name=\"directory\" value=\"" + dirCookie.getValue() + "\">");
+        out.println("</form>");
+        
         out.println("</body>");
         out.println("</html>");
 
