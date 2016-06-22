@@ -59,7 +59,8 @@ public class ShareSpace extends JFrame {
     }
 
     public static void main(String[] args) {
-        new ShareSpace();
+        new ShareSpace().setDirectory("C:/users/christian/desktop/fritz");
+        
     }
 
     public void remove() {
@@ -68,7 +69,7 @@ public class ShareSpace extends JFrame {
     }
     
     private void initializeButtonPanel() {
-        JPanel comPanel = new JPanel();
+        JPanel comPanel = new JPanel(new BorderLayout());
         download.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -83,8 +84,7 @@ public class ShareSpace extends JFrame {
             }
         });
         
-        comPanel.setLayout(new BoxLayout(comPanel, BoxLayout.X_AXIS));
-        comPanel.add(upload);
+        comPanel.add(upload, BorderLayout.EAST);
         JButton button = new JButton(" ");
         button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
@@ -96,9 +96,9 @@ public class ShareSpace extends JFrame {
                 isSpread = !isSpread;
             }
         });
-        comPanel.add(button);
+        comPanel.add(button, BorderLayout.CENTER);
         
-        comPanel.add(download);
+        comPanel.add(download, BorderLayout.WEST);
         add(comPanel, BorderLayout.NORTH);
     }
 

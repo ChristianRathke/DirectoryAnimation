@@ -74,7 +74,7 @@ public class ShareFolder extends HttpServlet {
         out.println("</html>");
         
         shareSpace().setDirectory(dir);  
-        shareSpace().toFront();
+        shareSpace().setVisible(true);
 
         out.close();    
 
