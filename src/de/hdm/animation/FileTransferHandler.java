@@ -65,11 +65,11 @@ public class FileTransferHandler extends TransferHandler {
                 java.util.List<File> l = (java.util.List<File>) t.getTransferData(DataFlavor.javaFileListFlavor);
 
                 for (File file : l) {
-                    copy(file, new File(directory, file.getName()));
+                    File newFile = new File(directory, file.getName());
+                    copy(file, newFile);
+                    panel.addFile(newFile);
                 }
                 
-                panel.reset();
-                panel.spreadDir();
             }
         } catch (UnsupportedFlavorException e) {
             return false;
@@ -98,7 +98,7 @@ public class FileTransferHandler extends TransferHandler {
         }
     }
 
-    private void copyFile(File source, File target) throws IOException {        
+    private void copyFile(File source, File target) throws IOException { 
         try (
                 InputStream in = new FileInputStream(source);
                 OutputStream out = new FileOutputStream(target)

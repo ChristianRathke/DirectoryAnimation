@@ -10,22 +10,21 @@ import javax.bluetooth.DiscoveryListener;
 import javax.bluetooth.LocalDevice;
 import javax.bluetooth.RemoteDevice;
 import javax.bluetooth.ServiceRecord;
-import javax.bluetooth.UUID;
 import javax.microedition.io.Connector;
 import javax.obex.ClientSession;
 import javax.obex.HeaderSet;
 import javax.obex.Operation;
 import javax.obex.ResponseCodes;
 
-public class MyDiscoveryListener implements DiscoveryListener{
-    
-    private static Object lock=new Object();
+public class MyDiscoveryListener implements DiscoveryListener {
+
+    private static Object lock = new Object();
     public ArrayList<RemoteDevice> devices;
-    
+
     public MyDiscoveryListener() {
         devices = new ArrayList<RemoteDevice>();
     }
-    
+
     public static void main(String[] args) {
         
         MyDiscoveryListener listener =  new MyDiscoveryListener();
@@ -48,7 +47,10 @@ public class MyDiscoveryListener implements DiscoveryListener{
             
             System.out.println("Device Inquiry Completed. ");
             
-       
+/*
+ * Service discovery  
+ * currently not used
+ *      
             UUID[] uuidSet = new UUID[1];
             uuidSet[0]=new UUID(0x1105); //OBEX Object Push service
             
@@ -74,13 +76,12 @@ public class MyDiscoveryListener implements DiscoveryListener{
                 
                 System.out.println("Service search finished.");
             }
+ */
             
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
-  
 
     @Override
     public void deviceDiscovered(RemoteDevice btDevice, DeviceClass arg1) {
@@ -90,15 +91,15 @@ public class MyDiscoveryListener implements DiscoveryListener{
         } catch (Exception e) {
             name = btDevice.getBluetoothAddress();
         }
-        
+
         devices.add(btDevice);
         System.out.println("device found: " + name);
-        
+
     }
 
     @Override
     public void inquiryCompleted(int arg0) {
-        synchronized(lock){
+        synchronized (lock) {
             lock.notify();
         }
     }
@@ -120,49 +121,47 @@ public class MyDiscoveryListener implements DiscoveryListener{
             DataElement serviceName = servRecord[i].getAttributeValue(0x0100);
             if (serviceName != null) {
                 System.out.println("service " + serviceName.getValue() + " found " + url);
-                
-                if(serviceName.getValue().equals("OBEX Object Push")){
-                    sendMessageToDevice(url);                
+
+                if (serviceName.getValue().equals("OBEX Object Push")) {
+                    sendMessageToDevice(url);
                 }
             } else {
                 System.out.println("service found " + url);
             }
-            
-          
+
         }
     }
-    
-    private static void sendMessageToDevice(String serverURL){
-        try{
+
+    private static void sendMessageToDevice(String serverURL) {
+        try {
             System.out.println("Connecting to " + serverURL);
-    
+
             ClientSession clientSession = (ClientSession) Connector.open(serverURL);
             HeaderSet hsConnectReply = clientSession.connect(null);
             if (hsConnectReply.getResponseCode() != ResponseCodes.OBEX_HTTP_OK) {
                 System.out.println("Failed to connect");
                 return;
             }
-    
+
             HeaderSet hsOperation = clientSession.createHeaderSet();
             hsOperation.setHeader(HeaderSet.NAME, "Hello.txt");
             hsOperation.setHeader(HeaderSet.TYPE, "text");
-    
-            //Create PUT Operation
+
+            // Create PUT Operation
             Operation putOperation = clientSession.put(hsOperation);
-    
+
             // Send some text to server
             byte data[] = "Hello World !!!".getBytes("iso-8859-1");
             OutputStream os = putOperation.openOutputStream();
             os.write(data);
             os.close();
-    
+
             putOperation.close();
-    
+
             clientSession.disconnect(null);
-    
+
             clientSession.close();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
