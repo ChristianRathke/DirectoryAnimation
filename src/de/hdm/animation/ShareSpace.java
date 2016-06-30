@@ -41,7 +41,7 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
     private DirectoryAnimationPanel dap = new DirectoryAnimationPanel();
     private File animationDir = new File(System.getProperty("java.io.tmpdir") + "/animation");
     private boolean isSpread = false;
-    private JButton titleButton = new JButton(" ");
+    private JButton titleButton = new JButton("Animate");
     private JPanel deviceDownloadButtonPanel = new JPanel();
     private JPanel deviceUploadButtonPanel = new JPanel();
     
@@ -79,7 +79,7 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
     }
 
     private void initializeLabelPanel() {
-        JPanel comPanel = new JPanel();
+        JPanel middlePanel = new JPanel(new BorderLayout());
         titleButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 if (isSpread) {
@@ -90,17 +90,20 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
                 isSpread = !isSpread;
             }
         });
+        middlePanel.add(titleButton, BorderLayout.WEST);
         
         JButton clearAnimationDirectory = new JButton("Remove all files");
+        clearAnimationDirectory.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         clearAnimationDirectory.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 dap.deleteAllFiles();
             }
         });
+        middlePanel.add(clearAnimationDirectory, BorderLayout.EAST);
 
+        JPanel comPanel = new JPanel(new BorderLayout());
+        comPanel.add(middlePanel, BorderLayout.CENTER);
         comPanel.add(new JButton("Download"), BorderLayout.EAST);
-        comPanel.add(titleButton, BorderLayout.CENTER);
-        comPanel.add(clearAnimationDirectory);
         comPanel.add(new JButton("Upload"), BorderLayout.WEST);
         add(comPanel, BorderLayout.NORTH);
     }
@@ -121,10 +124,10 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
             e1.printStackTrace();
         }
         JButton downloadButton = new JButton(name);
-        downloadButton.setFont(downloadButton.getFont().deriveFont(14.0f));
+        //downloadButton.setFont(downloadButton.getFont().deriveFont(14.0f));
         downloadButton.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         JButton uploadButton = new JButton(name);
-        uploadButton.setFont(uploadButton.getFont().deriveFont(14.0f));
+        //uploadButton.setFont(uploadButton.getFont().deriveFont(14.0f));
         uploadButton.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         final String friendlyName = name;
