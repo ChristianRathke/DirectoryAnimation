@@ -63,6 +63,9 @@ public class DirectoryAnimationPanel extends JPanel {
     public void setDirectory(File directory) {
 
         this.directory = directory;
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
         if (directory.isDirectory()) {
             setTransferHandler(new FileTransferHandler(directory, this));
             reset();
@@ -71,9 +74,9 @@ public class DirectoryAnimationPanel extends JPanel {
 
     public void reset() {
         removeAll();
+        fileLabels.clear();
 
         File[] files = directory.listFiles();
-
         generateFileLabels(files);
 
         // int length = (int) Math.round(Math.sqrt(files.length)) + 1;
@@ -133,18 +136,39 @@ public class DirectoryAnimationPanel extends JPanel {
      */
 
     public void addFile(File file) {
-        FileLabel label = generateFileLabel(file);
-        fileLabels.add(label);
+        FileLabel label = findFileLabel(file);
+        if (label == null) {
+            label = generateFileLabel(file);
+            fileLabels.add(label);
+        }
         spreadFile(label);
     }
-    
-    public void removeFile(File file) {
-        FileLabel label = findFileLabel(file);
-        if (label != null) {
-            removeLabel(label, true);
+
+    public void deleteAllFiles() {
+        for (File file : directory.listFiles()) {
+            deleteFile(file);
         }
     }
-    
+
+    public void deleteDirectory(File dir) {
+        for (File file : dir.listFiles()) {
+            deleteFile(file);
+        }
+        dir.delete();
+    }
+
+    public void deleteFile(File file) {
+        if (file.isDirectory()) {
+            deleteDirectory(file);
+        } else {
+            FileLabel label = findFileLabel(file);
+            if (label != null) {
+                removeLabel(label);
+            }
+            file.delete();
+        }
+    }
+
     private FileLabel findFileLabel(File file) {
         for (FileLabel label : fileLabels) {
             if (file.equals(label.getFile())) {
@@ -153,19 +177,12 @@ public class DirectoryAnimationPanel extends JPanel {
         }
         return null;
     }
-    
-    public void hideFile(File file){
-        FileLabel label = findFileLabel(file);
-        if (label != null) {
-            removeLabel(label, false);
-        }
-    }
 
-    public void removeLabel(FileLabel label, boolean isToBeRemoved) {
+    public void removeLabel(FileLabel label) {
         int index = fileLabels.indexOf(label);
         new FileAnimation(label, source, false).start();
         fileLabels.remove(index);
-        
+
         for (int j = index; j < fileLabels.size(); j++) {
             try {
                 Thread.sleep(delay);
@@ -173,7 +190,6 @@ public class DirectoryAnimationPanel extends JPanel {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-            new FileAnimation(fileLabels.get(j), computeLabelPosition(j), true).start();
         }
     }
 
@@ -183,16 +199,23 @@ public class DirectoryAnimationPanel extends JPanel {
         new FileAnimation(label, computeLabelPosition(index), true).start();
     }
 
-    public void shrinkFile(FileLabel label) {
-        int index = fileLabels.indexOf(label);
-        label.setLocation(computeLabelPosition(index));
-        new FileAnimation(label, source, false).start();
+    public void shrinkFile(File file) {
+        FileLabel label = findFileLabel(file);
+        if (label != null) {
+            int index = fileLabels.indexOf(label);
+            label.setLocation(computeLabelPosition(index));
+            new FileAnimation(label, source, false).start();
+        }
     }
 
     private void generateFileLabels(File[] files) {
         for (File file : files) {
             if (file.isDirectory()) {
-                generateFileLabels(file.listFiles());
+                if (file.listFiles().length == 0) {
+                    file.delete();
+                } else {
+                    generateFileLabels(file.listFiles());
+                }
             } else {
                 fileLabels.add(generateFileLabel(file));
             }
@@ -207,8 +230,8 @@ public class DirectoryAnimationPanel extends JPanel {
     }
 
     private Point computeLabelPosition(int index) {
-        int posX = distanceX * index;
-        return new Point(posX % getWidth(), distanceY * (posX / getWidth()));
+        int placesPerRow = getWidth() / distanceX;
+        return new Point((index % placesPerRow) * distanceX, (index / placesPerRow) * distanceY);
     }
 
     private class FileAnimation extends Thread {
@@ -290,9 +313,9 @@ public class DirectoryAnimationPanel extends JPanel {
         public void exportDone(JComponent c, Transferable t, int action) {
             if (action != TransferHandler.COPY) {
                 FileLabel label = (FileLabel) c;
-                System.out.println("removing " + label.getFile());
-                label.getFile().delete();
-                removeLabel(label, true);
+                File file = label.getFile();
+                System.out.println("removing " + file);
+                deleteFile(file);
             }
         }
     }

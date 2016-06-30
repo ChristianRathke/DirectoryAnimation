@@ -21,8 +21,7 @@ import javax.swing.TransferHandler;
  * @author rathke
  */
 /**
- * This transfer handler handles files dragged to its
- * component.
+ * This transfer handler handles files dragged to its component.
  */
 public class FileTransferHandler extends TransferHandler {
 
@@ -67,9 +66,8 @@ public class FileTransferHandler extends TransferHandler {
                 for (File file : l) {
                     File newFile = new File(directory, file.getName());
                     copy(file, newFile);
-                    panel.addFile(newFile);
                 }
-                
+
             }
         } catch (UnsupportedFlavorException e) {
             return false;
@@ -79,7 +77,7 @@ public class FileTransferHandler extends TransferHandler {
 
         return true;
     }
-    
+
     private void copy(File sourceLocation, File targetLocation) throws IOException {
         if (sourceLocation.isDirectory()) {
             copyDirectory(sourceLocation, targetLocation);
@@ -98,16 +96,14 @@ public class FileTransferHandler extends TransferHandler {
         }
     }
 
-    private void copyFile(File source, File target) throws IOException { 
-        try (
-                InputStream in = new FileInputStream(source);
-                OutputStream out = new FileOutputStream(target)
-        ) {
+    private void copyFile(File source, File target) throws IOException {
+        try (InputStream in = new FileInputStream(source); OutputStream out = new FileOutputStream(target)) {
             byte[] buf = new byte[1024];
             int length;
             while ((length = in.read(buf)) > 0) {
                 out.write(buf, 0, length);
             }
+            panel.addFile(target);
         }
     }
 }

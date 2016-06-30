@@ -79,20 +79,13 @@ public class Dropbox {
 
     public void downloadFiles(File targetDirectory) throws DbxException {
         DbxUserFilesRequests filesRequests = getFilesRequests();
-        new Thread() {
-            public void run() {
-                try {
-                    downloadFiles(targetDirectory, filesRequests, filesRequests.listFolder(""));
-                } catch (ListFolderErrorException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } catch (DbxException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-        }.start();
-        
+        try {
+            downloadFiles(targetDirectory, filesRequests, filesRequests.listFolder(""));
+        } catch (ListFolderErrorException e) {
+            e.printStackTrace();
+        } catch (DbxException e) {
+            e.printStackTrace();
+        }
     }
 
     private void downloadFiles(File targetDirectory, DbxUserFilesRequests filesRequests, ListFolderResult result)
@@ -105,13 +98,17 @@ public class Dropbox {
                 targetFile = new File(targetDirectory, md.getName());
                 targetFile.mkdir();
                 downloadFiles(targetFile, filesRequests, filesRequests.listFolder(md.getPathLower()));
+                if (targetFile.listFiles().length == 0) {
+                    // empty folders are deleted right away
+                    targetFile.delete();
+                }
             } else {
                 targetFile = new File(targetDirectory, md.getName());
                 try {
                     out = new FileOutputStream(targetFile);
-                    animationPanel.addFile(targetFile);
                     System.out.println("downloading " + targetFile.getName());
                     filesRequests.download(md.getPathLower()).download(out);
+                    animationPanel.addFile(targetFile);
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
@@ -123,28 +120,25 @@ public class Dropbox {
             downloadFiles(targetDirectory, filesRequests, filesRequests.listFolderContinue(result.getCursor()));
         }
     }
-    
+
     public void uploadFiles(File sourceDirectory) throws DbxException {
         DbxUserFilesRequests filesRequests = getFilesRequests();
-        new Thread() {
-            public void run() {
-                try {
-                    uploadFiles(sourceDirectory, "", filesRequests);
-                    animationPanel.reset();
-                } catch (DbxException e) {
-                    e.printStackTrace();
-                }
-            }
-        }.start();
+        try {
+            uploadFiles(sourceDirectory, "", filesRequests);
+        } catch (DbxException e) {
+            e.printStackTrace();
+        }
     }
 
-    private void uploadFiles(File sourceDirectory, String targetPath, DbxUserFilesRequests filesRequests) throws DbxException {
+    private void uploadFiles(File sourceDirectory, String targetPath, DbxUserFilesRequests filesRequests)
+            throws DbxException {
 
         // Get files and folder to Dropbox root directory
         for (File file : sourceDirectory.listFiles()) {
             if (!file.isDirectory()) {
                 try (InputStream in = new FileInputStream(file)) {
-                    animationPanel.hideFile(file);
+                    // this will remove the file label for the file only
+                    animationPanel.shrinkFile(file);
                     System.out.println("uploading " + file.getName() + " to " + targetPath);
                     filesRequests.uploadBuilder(targetPath + "/" + file.getName()).uploadAndFinish(in);
                 } catch (IOException e) {

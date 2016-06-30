@@ -9,11 +9,7 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +21,7 @@ import javax.bluetooth.DiscoveryListener;
 import javax.bluetooth.LocalDevice;
 import javax.bluetooth.RemoteDevice;
 import javax.bluetooth.ServiceRecord;
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -42,13 +39,16 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
      */
     private static final long serialVersionUID = 1L;
     private DirectoryAnimationPanel dap = new DirectoryAnimationPanel();
-    private File directory;
     private File animationDir = new File(System.getProperty("java.io.tmpdir") + "/animation");
     private boolean isSpread = false;
+    private JButton titleButton = new JButton(" ");
     private JPanel deviceDownloadButtonPanel = new JPanel();
     private JPanel deviceUploadButtonPanel = new JPanel();
+    
+    private Map<String,User> phones = new HashMap<String,User>();
+    
     private Map<RemoteDevice, JButton> shownDevices = new HashMap<RemoteDevice, JButton>();
-    private ArrayList<RemoteDevice> collectedDevices = new ArrayList<RemoteDevice>();
+    private ArrayList<RemoteDevice> tmpCollectedDevices = new ArrayList<RemoteDevice>();
 
     public ShareSpace() {
         super("Flying Docs");
@@ -57,9 +57,6 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         add(dap, BorderLayout.CENTER);
-        if (!animationDir.exists()) {
-            animationDir.mkdirs();
-        }
 
         initializeLabelPanel();
         initializeSmartphoneList();
@@ -73,8 +70,7 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
     }
 
     public static void main(String[] args) {
-        new ShareSpace().setDirectory("C:/users/christian/desktop/franz");
-
+        new ShareSpace();
     }
 
     public void remove() {
@@ -83,9 +79,8 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
     }
 
     private void initializeLabelPanel() {
-        JPanel comPanel = new JPanel(new BorderLayout());
-        JButton button = new JButton(" ");
-        button.addActionListener(new ActionListener() {
+        JPanel comPanel = new JPanel();
+        titleButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 if (isSpread) {
                     dap.shrinkDir();
@@ -95,10 +90,18 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
                 isSpread = !isSpread;
             }
         });
+        
+        JButton clearAnimationDirectory = new JButton("Remove all files");
+        clearAnimationDirectory.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                dap.deleteAllFiles();
+            }
+        });
 
-        comPanel.add(new JButton("Upload"), BorderLayout.EAST);
-        comPanel.add(button, BorderLayout.CENTER);
-        comPanel.add(new JButton("Download"), BorderLayout.WEST);
+        comPanel.add(new JButton("Download"), BorderLayout.EAST);
+        comPanel.add(titleButton, BorderLayout.CENTER);
+        comPanel.add(clearAnimationDirectory);
+        comPanel.add(new JButton("Upload"), BorderLayout.WEST);
         add(comPanel, BorderLayout.NORTH);
     }
 
@@ -117,25 +120,38 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
             // TODO Auto-generated catch block
             e1.printStackTrace();
         }
-        JButton donwloadButton = new JButton(name);
+        JButton downloadButton = new JButton(name);
+        downloadButton.setFont(downloadButton.getFont().deriveFont(14.0f));
+        downloadButton.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         JButton uploadButton = new JButton(name);
+        uploadButton.setFont(uploadButton.getFont().deriveFont(14.0f));
+        uploadButton.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         final String friendlyName = name;
         final String bluetoothAddress = device.getBluetoothAddress();
 
-        donwloadButton.addActionListener(new ActionListener() {
+        downloadButton.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
-                User user = User.getUser(device.getBluetoothAddress());
+                User user = User.getUser(bluetoothAddress);
                 if (user.hasToken()) {
-                    try {
-                        new Dropbox(user.getToken(), dap).downloadFiles(animationDir);
-                    } catch (DbxException e1) {
-                        e1.printStackTrace();
-                    }
+                    new Thread() {
+                        public void run() {
+                            try {
+                                titleButton.setText("Downloading ....");
+                                // this will recreate all file labels in the animation panel
+                                dap.reset();
+                                new Dropbox(user.getToken(), dap).downloadFiles(animationDir);
+                                titleButton.setText(" ");
+                                isSpread = true;
+                            } catch (DbxException e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+                    }.start();
                 } else {
                     System.out.println("User of " + friendlyName + " is not registered.");
-                    new RegisterSmartphoneQR(friendlyName, bluetoothAddress);
+                    RegisterSmartphoneQR.newInstance(friendlyName, bluetoothAddress);
                 }
             }
         });
@@ -145,22 +161,30 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
             public void actionPerformed(ActionEvent e) {
                 User user = User.getUser(device.getBluetoothAddress());
                 if (user.hasToken()) {
-                    try {
-                        new Dropbox(user.getToken(), dap).uploadFiles(animationDir);
-                        isSpread = false;
-                    } catch (DbxException e1) {
-                        e1.printStackTrace();
-                    }
+                    new Thread() {
+                        public void run() {
+                            try {
+                                titleButton.setText("Uploading ....");
+                                new Dropbox(user.getToken(), dap).uploadFiles(animationDir);
+                                // this will recreate all file labels in the animation panel
+                                dap.reset();
+                                titleButton.setText(" ");
+                                isSpread = false;
+                            } catch (DbxException e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+                    }.start();
                 } else {
                     System.out.println("User of " + friendlyName + " is not registered.");
-                    new RegisterSmartphoneQR(friendlyName, bluetoothAddress);
+                    RegisterSmartphoneQR.newInstance(friendlyName, bluetoothAddress);
                 }
             }
         });
 
-        deviceDownloadButtonPanel.add(donwloadButton);
+        deviceDownloadButtonPanel.add(downloadButton);
         deviceUploadButtonPanel.add(uploadButton);
-        shownDevices.put(device, donwloadButton);
+        shownDevices.put(device, downloadButton);
         pack();
     }
 
@@ -179,96 +203,12 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
         }
     }
 
-    public void setDirectory(String dir) {
-        setDirectory(new File(dir));
-    }
-
-    public void setDirectory(File dir) {
-        directory = dir;
-    }
-
-    public void downloadDir() {
-        try {
-            File target = null;
-            for (String f : directory.list()) {
-                target = new File(animationDir, f);
-                copy(new File(directory, f), target);
-                dap.addFile(target);
-            }
-            // copy(directory, animationDir);
-            // dap.spreadDir();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        isSpread = true;
-    }
-
-    public void uploadDir() {
-        try {
-            File source = null;
-            for (String f : animationDir.list()) {
-                source = new File(animationDir, f);
-                copy(source, new File(directory, f));
-                delete(source);
-                dap.removeFile(source);
-            }
-            // copy(animationDir, directory);
-            // dap.shrinkDir();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        isSpread = false;
-    }
-
-    void copy(File sourceLocation, File targetLocation) throws IOException {
-        if (sourceLocation.isDirectory()) {
-            copyDirectory(sourceLocation, targetLocation);
-        } else {
-            copyFile(sourceLocation, targetLocation);
-        }
-    }
-
-    void copyDirectory(File source, File target) throws IOException {
-        if (!target.exists()) {
-            target.mkdirs();
-        }
-
-        for (String f : source.list()) {
-            copy(new File(source, f), new File(target, f));
-        }
-    }
-
-    void copyFile(File source, File target) throws IOException {
-        try (InputStream in = new FileInputStream(source); OutputStream out = new FileOutputStream(target)) {
-            byte[] buf = new byte[1024];
-            int length;
-            while ((length = in.read(buf)) > 0) {
-                out.write(buf, 0, length);
-            }
-        }
-    }
-
-    void delete(File file) {
-        if (file.isDirectory()) {
-            deleteDirectory(file);
-        } else {
-            file.delete();
-        }
-    }
-
-    void deleteDirectory(File dir) {
-        for (File file : dir.listFiles()) {
-            delete(file);
-        }
-        dir.delete();
-    }
-
     @Override
     public void deviceDiscovered(RemoteDevice btDevice, DeviceClass arg1) {
         if (!shownDevices.containsKey(btDevice)) {
             this.addDeviceButtons(btDevice);
         }
-        collectedDevices.add(btDevice);
+        tmpCollectedDevices.add(btDevice);
 
     }
 
@@ -276,7 +216,7 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
     public void inquiryCompleted(int arg0) {
         // System.out.println("Inquiry completed.");
         for (RemoteDevice shown : shownDevices.keySet()) {
-            if (!collectedDevices.contains(shown)) {
+            if (!tmpCollectedDevices.contains(shown)) {
                 removeDeviceButton(shown);
             }
         }
@@ -284,7 +224,6 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
             // wait for 1 minute to resume device discovery
             Thread.sleep(60000);
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         startRemoteDeviceDiscovery();
@@ -292,13 +231,11 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
 
     @Override
     public void serviceSearchCompleted(int arg0, int arg1) {
-        // TODO Auto-generated method stub
 
     }
 
     @Override
     public void servicesDiscovered(int arg0, ServiceRecord[] arg1) {
-        // TODO Auto-generated method stub
 
     }
 }

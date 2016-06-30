@@ -75,7 +75,7 @@ public class EnterShareSpace extends HttpServlet {
         out.println("</body>");
         out.println("</html>");
         
-        shareSpace().setDirectory(dir);  
+        shareSpace();  
         shareSpace().setVisible(true);
 
         out.close();    
