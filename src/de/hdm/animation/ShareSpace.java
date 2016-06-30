@@ -103,8 +103,8 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
 
         JPanel comPanel = new JPanel(new BorderLayout());
         comPanel.add(middlePanel, BorderLayout.CENTER);
-        comPanel.add(new JButton("Download"), BorderLayout.EAST);
-        comPanel.add(new JButton("Upload"), BorderLayout.WEST);
+        comPanel.add(new JButton("Download       "), BorderLayout.WEST);
+        comPanel.add(new JButton("Upload         "), BorderLayout.EAST);
         add(comPanel, BorderLayout.NORTH);
     }
 
@@ -145,7 +145,7 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
                                 // this will recreate all file labels in the animation panel
                                 dap.reset();
                                 new Dropbox(user.getToken(), dap).downloadFiles(animationDir);
-                                titleButton.setText(" ");
+                                titleButton.setText("Animate");
                                 isSpread = true;
                             } catch (DbxException e1) {
                                 e1.printStackTrace();
@@ -171,7 +171,7 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
                                 new Dropbox(user.getToken(), dap).uploadFiles(animationDir);
                                 // this will recreate all file labels in the animation panel
                                 dap.reset();
-                                titleButton.setText(" ");
+                                titleButton.setText("Animate");
                                 isSpread = false;
                             } catch (DbxException e1) {
                                 e1.printStackTrace();
