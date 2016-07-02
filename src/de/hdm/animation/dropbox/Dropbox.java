@@ -16,25 +16,34 @@ import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.DbxUserFilesRequests;
 import com.dropbox.core.v2.files.FolderMetadata;
+import com.dropbox.core.v2.files.GetMetadataErrorException;
 import com.dropbox.core.v2.files.ListFolderErrorException;
 import com.dropbox.core.v2.files.ListFolderResult;
 import com.dropbox.core.v2.files.Metadata;
+import com.dropbox.core.v2.files.UploadErrorException;
 import com.dropbox.core.v2.users.FullAccount;
 
 import de.hdm.animation.DirectoryAnimationPanel;
+import de.hdm.animation.PlaceHolderAnimationPanel;
 
 public class Dropbox {
-    private String ACCESS_TOKEN = "";
-    private DirectoryAnimationPanel animationPanel;
+    private String accessToken = "";
+    private DirectoryAnimationPanel animationPanel = PlaceHolderAnimationPanel.thePanel;
 
     public Dropbox(String accessToken, DirectoryAnimationPanel dap) {
-        this.ACCESS_TOKEN = accessToken;
+        this(accessToken);
         this.animationPanel = dap;
+    }
+    
+    public Dropbox(String accessToken) {
+        this.accessToken = accessToken;
     }
 
     public static void main(String[] args) {
         try {
-            new Dropbox("NxHgZgl9b78AAAAAAAANaCPIjq6PfQvhmAx7RXHFzyfWoc29pH3lIGhd5P3YzFwF", null).showFiles();
+            Dropbox dbx = new Dropbox("NxHgZgl9b78AAAAAAAANaCPIjq6PfQvhmAx7RXHFzyfWoc29pH3lIGhd5P3YzFwF", null);
+            dbx.showAccount();
+            dbx.showFiles();
         } catch (DbxException e) {
             e.printStackTrace();
         }
@@ -43,19 +52,26 @@ public class Dropbox {
     public void showAccount() throws DbxException {
         // Create Dropbox client
         DbxRequestConfig config = DbxRequestConfig.newBuilder("HdM/Sharing").build();
-        DbxClientV2 client = new DbxClientV2(config, ACCESS_TOKEN);
+        DbxClientV2 client = new DbxClientV2(config, accessToken);
 
         // Get current account info
         FullAccount account = client.users().getCurrentAccount();
         System.out.println(account.getName().getDisplayName());
     }
+    
+    public DbxClientV2 getClient() {
+     // Create Dropbox client
+        DbxRequestConfig config = DbxRequestConfig.newBuilder("HdM/Sharing").build();
+        DbxClientV2 client = new DbxClientV2(config, accessToken);
+        return client;
+    }
+    
+    public FullAccount getAccount() throws DbxException {
+        return getClient().users().getCurrentAccount();
+    }
 
     private DbxUserFilesRequests getFilesRequests() {
-        // Create Dropbox client
-        DbxRequestConfig config = DbxRequestConfig.newBuilder("HdM/Sharing").build();
-        DbxClientV2 client = new DbxClientV2(config, ACCESS_TOKEN);
-
-        return client.files();
+        return getClient().files();
     }
 
     public void showFiles() throws DbxException {
@@ -75,6 +91,11 @@ public class Dropbox {
         if (result.getHasMore()) {
             showFiles(filesRequests, filesRequests.listFolderContinue(result.getCursor()));
         }
+    }
+    
+    public Dropbox withAnimationPanel(DirectoryAnimationPanel panel) {
+        animationPanel = panel;
+        return this;
     }
 
     public void downloadFiles(File targetDirectory) throws DbxException {
@@ -140,13 +161,22 @@ public class Dropbox {
                     // this will remove the file label for the file only
                     animationPanel.shrinkFile(file);
                     System.out.println("uploading " + file.getName() + " to " + targetPath);
-                    filesRequests.uploadBuilder(targetPath + "/" + file.getName()).uploadAndFinish(in);
+                    try {
+                        filesRequests.uploadBuilder(targetPath + "/" + file.getName()).uploadAndFinish(in);
+                    } catch (UploadErrorException e) {
+                        System.out.println(e.getMessage());
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             } else {
                 String newTargetPath = targetPath + "/" + file.getName();
-                filesRequests.createFolder(newTargetPath);
+                try {
+                    filesRequests.getMetadata(newTargetPath);
+                } catch (GetMetadataErrorException e) {
+                    System.out.println("Error to confirm absence of " + newTargetPath);
+                    filesRequests.createFolder(newTargetPath);
+                }
                 uploadFiles(file, newTargetPath, filesRequests);
             }
         }

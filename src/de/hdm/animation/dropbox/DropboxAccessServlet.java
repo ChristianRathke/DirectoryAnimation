@@ -27,8 +27,8 @@ public abstract class DropboxAccessServlet extends HttpServlet {
      */
     private static final String appInfoFileName = "appInfo.xml";
     private static Properties appProps = new Properties();
-    private static final String key = "k5t2a6b3mg5rjsv";
-    private static final String secret = "vaylhk5vzvq4dlq";
+    private static final String key = "m4oul02qsxvye2f";
+    private static final String secret = "u7a8t3gi31o0r5l";
 
     
 

@@ -66,15 +66,9 @@ public class RegisterSmartphoneQR extends JFrame {
 
         // setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         try {
-            JPanel registerPanel = new JPanel();
-            String host = "";
-            ImageIcon icon = null;
-            host = InetAddress.getLocalHost().getHostAddress();
-            icon = new ImageIcon(new QRCode("http://" + host + ":8080/DirectoryAnimation/RegisterSmartphone?"
-                    + "smartphone=" + bluetoothAddress, 400).getImage());
-            JLabel QRCode = new JLabel(icon);
-            registerPanel.add(QRCode);
-            add(registerPanel, BorderLayout.CENTER);
+            String host = InetAddress.getLocalHost().getHostAddress();
+            add(new QRCode("http://" + host + ":8080/DirectoryAnimation/RegisterSmartphone?"
+                    + "smartphone=" + bluetoothAddress, 400).getJPanel());
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
@@ -84,6 +78,6 @@ public class RegisterSmartphoneQR extends JFrame {
     }
 
     public static void main(String[] args) {
-        new RegisterSmartphoneQR("foobar", "sdfjljj");
+        RegisterSmartphoneQR.newInstance("foobar", "sdfjljj");
     }
 }

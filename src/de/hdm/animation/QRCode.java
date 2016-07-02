@@ -6,7 +6,6 @@ package de.hdm.animation;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -14,6 +13,9 @@ import java.io.IOException;
 import java.util.Hashtable;
 
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
@@ -48,6 +50,34 @@ public class QRCode {
     
     public BufferedImage getImage() {
         return image;
+    }
+    
+    public ImageIcon getImageIcon() {
+        return new ImageIcon(getImage());
+    }
+    
+    public JLabel getJLabel() {
+        return new JLabel(getImageIcon());
+    }
+    
+    public JLabel getJLabel(String text) {
+        JLabel label = getJLabel();
+        label.setText(text);
+        label.setHorizontalTextPosition(JLabel.CENTER);
+        label.setVerticalTextPosition(JLabel.BOTTOM);
+        return label;
+    }
+    
+    public JPanel getJPanel() {
+        JPanel panel = new JPanel();
+        panel.add(getJLabel());
+        return panel;
+    }
+    
+    public JPanel getJPanel(String text) {
+        JPanel panel = new JPanel();
+        panel.add(getJLabel(text));
+        return panel;
     }
 
     public void createImage() {

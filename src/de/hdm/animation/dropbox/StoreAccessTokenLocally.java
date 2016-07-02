@@ -72,7 +72,6 @@ public class StoreAccessTokenLocally extends DropboxAccessServlet {
         // calls. Save it in the database entry for the current user.
         User user = (User) request.getSession().getAttribute("user");
         user.setToken(authFinish.getAccessToken());
-        user.saveUsers();
 
         try {
             new Dropbox(user.getToken(), null).showFiles();

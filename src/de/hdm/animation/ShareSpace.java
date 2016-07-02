@@ -8,8 +8,11 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +32,6 @@ import javax.swing.JPanel;
 
 import com.dropbox.core.DbxException;
 
-import de.hdm.animation.dropbox.Dropbox;
 import de.hdm.animation.dropbox.RegisterSmartphoneQR;
 
 public class ShareSpace extends JFrame implements DiscoveryListener {
@@ -38,39 +40,81 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
      * 
      */
     private static final long serialVersionUID = 1L;
+    private static ShareSpace instance = null;
+
     private DirectoryAnimationPanel dap = new DirectoryAnimationPanel();
+    private String contextPath = "http://localhost:8080/DirectoryAnimation/";
     private File animationDir = new File(System.getProperty("java.io.tmpdir") + "/animation");
-    private boolean isSpread = false;
     private JButton titleButton = new JButton("Animate");
     private JPanel deviceDownloadButtonPanel = new JPanel();
     private JPanel deviceUploadButtonPanel = new JPanel();
-    
-    private Map<String,User> phones = new HashMap<String,User>();
-    
-    private Map<RemoteDevice, JButton> shownDevices = new HashMap<RemoteDevice, JButton>();
+    private Color backgroundColor = Color.white;
+
+    private Map<String, User> phones = new HashMap<String, User>();
+
+    private Map<RemoteDevice, DbxButton> downloadButtons = new HashMap<RemoteDevice, DbxButton>();
+    private Map<RemoteDevice, DbxButton> uploadButtons = new HashMap<RemoteDevice, DbxButton>();
+
     private ArrayList<RemoteDevice> tmpCollectedDevices = new ArrayList<RemoteDevice>();
 
-    public ShareSpace() {
+    private class DbxButton extends JButton {
+        private User user;
+
+        private DbxButton(User u) {
+            super(u.getFriendlyName());
+            user = u;
+            setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        }
+
+        private boolean isConnected() {
+            return user.hasToken();
+        }
+
+        private boolean equalsSmartphoneId(String id) {
+            return id.equals(user.getDeviceId());
+        }
+    }
+
+    public static ShareSpace instance() {
+        if (instance == null) {
+            instance = new ShareSpace();
+        }
+        return instance;
+    }
+
+    private ShareSpace() {
         super("Flying Docs");
         dap.setFrame(this);
         dap.setDirectory(animationDir);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
 
+            @Override
+            public void windowClosing(WindowEvent we) {
+                instance = null;
+                dispose();
+            }
+
+        });
         add(dap, BorderLayout.CENTER);
+        
+        try {
+            contextPath = "http://" + InetAddress.getLocalHost().getHostAddress() + ":8080/DirectoryAnimation/";
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
 
         initializeLabelPanel();
         initializeSmartphoneList();
 
         pack();
         setLocationRelativeTo(null);
-        setBackground(Color.white);
         setVisible(true);
 
         startRemoteDeviceDiscovery();
     }
 
     public static void main(String[] args) {
-        new ShareSpace();
+        ShareSpace.instance();
     }
 
     public void remove() {
@@ -79,122 +123,149 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
     }
 
     private void initializeLabelPanel() {
-        JPanel middlePanel = new JPanel(new BorderLayout());
+
         titleButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                if (isSpread) {
-                    dap.shrinkDir();
-                } else {
-                    dap.spreadDir();
-                }
-                isSpread = !isSpread;
+                dap.animate();
             }
         });
-        middlePanel.add(titleButton, BorderLayout.WEST);
-        
+
         JButton clearAnimationDirectory = new JButton("Remove all files");
-        clearAnimationDirectory.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         clearAnimationDirectory.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                dap.deleteAllFiles();
+                new Thread() {
+                    public void run() {
+                        dap.deleteAllFiles();
+                        dap.reset();
+                    }
+                }.start();
             }
         });
-        middlePanel.add(clearAnimationDirectory, BorderLayout.EAST);
+
+        JPanel middlePanel = new JPanel();
+        middlePanel.setBackground(backgroundColor);
+        JPanel tmpPanel = new JPanel();
+        tmpPanel.setBackground(backgroundColor);
+
+        middlePanel.add(tmpPanel);
+        middlePanel.add(titleButton);
+        middlePanel.add(clearAnimationDirectory);
+        tmpPanel = new JPanel();
+        tmpPanel.setBackground(backgroundColor);
+        middlePanel.add(tmpPanel);
 
         JPanel comPanel = new JPanel(new BorderLayout());
+        comPanel.setBackground(backgroundColor);
         comPanel.add(middlePanel, BorderLayout.CENTER);
-        comPanel.add(new JButton("Download       "), BorderLayout.WEST);
-        comPanel.add(new JButton("Upload         "), BorderLayout.EAST);
+        comPanel.add(new QRCode(contextPath + "UpOrDownload?direction=download", 200)
+                .getJPanel("Download"), BorderLayout.WEST);
+        comPanel.add(new QRCode(contextPath + "UpOrDownload?direction=upload", 200)
+                .getJPanel("Upload"), BorderLayout.EAST);
         add(comPanel, BorderLayout.NORTH);
     }
 
     private void initializeSmartphoneList() {
         deviceDownloadButtonPanel.setLayout(new BoxLayout(deviceDownloadButtonPanel, BoxLayout.PAGE_AXIS));
+        deviceDownloadButtonPanel.setBackground(backgroundColor);
+
         deviceUploadButtonPanel.setLayout(new BoxLayout(deviceUploadButtonPanel, BoxLayout.PAGE_AXIS));
+        deviceUploadButtonPanel.setBackground(backgroundColor);
+
         add(deviceDownloadButtonPanel, BorderLayout.WEST);
         add(deviceUploadButtonPanel, BorderLayout.EAST);
     }
 
     private void addDeviceButtons(RemoteDevice device) {
-        String name = "unknown Phone";
-        try {
-            name = device.getFriendlyName(false);
-        } catch (IOException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        }
-        JButton downloadButton = new JButton(name);
-        //downloadButton.setFont(downloadButton.getFont().deriveFont(14.0f));
-        downloadButton.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        JButton uploadButton = new JButton(name);
-        //uploadButton.setFont(uploadButton.getFont().deriveFont(14.0f));
-        uploadButton.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        User user = new User(device);
 
-        final String friendlyName = name;
-        final String bluetoothAddress = device.getBluetoothAddress();
-
+        DbxButton downloadButton = new DbxButton(user);
         downloadButton.addActionListener(new ActionListener() {
-
             public void actionPerformed(ActionEvent e) {
-                User user = User.getUser(bluetoothAddress);
-                if (user.hasToken()) {
-                    new Thread() {
-                        public void run() {
-                            try {
-                                titleButton.setText("Downloading ....");
-                                // this will recreate all file labels in the animation panel
-                                dap.reset();
-                                new Dropbox(user.getToken(), dap).downloadFiles(animationDir);
-                                titleButton.setText("Animate");
-                                isSpread = true;
-                            } catch (DbxException e1) {
-                                e1.printStackTrace();
-                            }
-                        }
-                    }.start();
-                } else {
-                    System.out.println("User of " + friendlyName + " is not registered.");
-                    RegisterSmartphoneQR.newInstance(friendlyName, bluetoothAddress);
-                }
+                downloadUserDropbox(user);
             }
         });
-
-        uploadButton.addActionListener(new ActionListener() {
-
-            public void actionPerformed(ActionEvent e) {
-                User user = User.getUser(device.getBluetoothAddress());
-                if (user.hasToken()) {
-                    new Thread() {
-                        public void run() {
-                            try {
-                                titleButton.setText("Uploading ....");
-                                new Dropbox(user.getToken(), dap).uploadFiles(animationDir);
-                                // this will recreate all file labels in the animation panel
-                                dap.reset();
-                                titleButton.setText("Animate");
-                                isSpread = false;
-                            } catch (DbxException e1) {
-                                e1.printStackTrace();
-                            }
-                        }
-                    }.start();
-                } else {
-                    System.out.println("User of " + friendlyName + " is not registered.");
-                    RegisterSmartphoneQR.newInstance(friendlyName, bluetoothAddress);
-                }
-            }
-        });
-
         deviceDownloadButtonPanel.add(downloadButton);
+
+        DbxButton uploadButton = new DbxButton(user);
+        uploadButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                uploadUserDropbox(user);
+            }
+        });
         deviceUploadButtonPanel.add(uploadButton);
-        shownDevices.put(device, downloadButton);
+
+        downloadButtons.put(device, downloadButton);
+        uploadButtons.put(device, uploadButton);
+
         pack();
     }
 
+    public void downloadUserDropbox(User user) {
+        if (user.hasToken()) {
+            new Thread() {
+                public void run() {
+                    try {
+                        titleButton.setText("Downloading ....");
+                        // this will recreate all file labels in the
+                        // animation panel
+                        dap.reset();
+                        user.getDropbox().withAnimationPanel(dap).downloadFiles(animationDir);
+                        titleButton.setText("Animate");
+                    } catch (DbxException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            }.start();
+        } else {
+            System.out.println("User of " + user.getFriendlyName() + " is not registered.");
+            RegisterSmartphoneQR.newInstance(user.getFriendlyName(), user.getDeviceId());
+        }
+    }
+
+    public void uploadUserDropbox(User user) {
+        if (user.hasToken()) {
+            new Thread() {
+                public void run() {
+                    try {
+                        titleButton.setText("Uploading ....");
+                        user.getDropbox().withAnimationPanel(dap).uploadFiles(animationDir);
+                        // this will recreate all file labels in the
+                        // animation panel
+                        dap.reset();
+                        titleButton.setText("Animate");
+                    } catch (DbxException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            }.start();
+        } else {
+            System.out.println("User of " + user.getFriendlyName() + " is not registered.");
+            RegisterSmartphoneQR.newInstance(user.getFriendlyName(), user.getDeviceId());
+        }
+    }
+
+    private void indicateRegistrationStatus(RemoteDevice device) {
+        DbxButton db = downloadButtons.get(device);
+        DbxButton ub = uploadButtons.get(device);
+
+        if (db.user.hasToken()) {
+            try {
+                ub.setText(db.user.getDropbox().getAccount().getName().getFamiliarName());
+                db.setText(db.user.getDropbox().getAccount().getName().getFamiliarName());
+            } catch (DbxException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private void removeDeviceButton(RemoteDevice device) {
-        JButton downloadButton = shownDevices.get(device);
-        deviceDownloadButtonPanel.remove(downloadButton);
-        shownDevices.remove(device);
+        JButton button = downloadButtons.get(device);
+        deviceDownloadButtonPanel.remove(button);
+        downloadButtons.remove(device);
+
+        button = uploadButtons.get(device);
+        deviceDownloadButtonPanel.remove(button);
+        uploadButtons.remove(device);
     }
 
     private void startRemoteDeviceDiscovery() {
@@ -208,17 +279,18 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
 
     @Override
     public void deviceDiscovered(RemoteDevice btDevice, DeviceClass arg1) {
-        if (!shownDevices.containsKey(btDevice)) {
+        if (!downloadButtons.containsKey(btDevice)) {
             this.addDeviceButtons(btDevice);
         }
         tmpCollectedDevices.add(btDevice);
+        indicateRegistrationStatus(btDevice);
 
     }
 
     @Override
     public void inquiryCompleted(int arg0) {
         // System.out.println("Inquiry completed.");
-        for (RemoteDevice shown : shownDevices.keySet()) {
+        for (RemoteDevice shown : downloadButtons.keySet()) {
             if (!tmpCollectedDevices.contains(shown)) {
                 removeDeviceButton(shown);
             }

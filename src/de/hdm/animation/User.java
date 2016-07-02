@@ -5,55 +5,87 @@
 package de.hdm.animation;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Properties;
+
+import javax.bluetooth.RemoteDevice;
+
+import com.dropbox.core.v2.DbxClientV2;
+
+import de.hdm.animation.dropbox.Dropbox;
 
 public class User {
     /*
      * The userDB contains key-value pairs associating smartphone ids to
      * dropbox access tokens.
      */
-    private static final String userDBName = "users.xml";
-    private static File userDB;
-    private static Properties users = new Properties();
-    static {
-        userDB = new File(System.getenv("appdata") +  "/HdMSharingApp/" + userDBName);
-        Common.loadXMLFile(userDB, users);
-    }
     
+    private File appFileDir = new File(System.getenv("appdata") +  "/HdMSharingApp");
+    private String deviceId;
+    private Dropbox dropbox;
+    private Properties props = new Properties();
     
-    private String id;
-    private String token;
-
-    public static User getUser(String id) {
-        Common.loadXMLFile(userDB, users);
-        return new User(id, users.getProperty(id));
-    }
-    
-    public User(String id, String token) {
-        this(id);
+    public User(String deviceId, String token) {
+        this(deviceId);
         setToken(token);
     }
-
-    public User(String id) {
-        this.id = id;
+    
+    public User(String deviceId) {
+        this.deviceId = deviceId;
+        loadProps();
     }
-
-    public void saveUsers() {
-        Common.saveXMLFile(userDB, users);
+    
+    public User(RemoteDevice device) {
+        this(device.getBluetoothAddress());
+        try {
+            setFriendlyName(device.getFriendlyName(false));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private void loadProps() {
+        Common.loadXMLFile(new File(appFileDir, deviceId), props);
+    }
+    
+    public void save() {
+        Common.saveXMLFile(new File(appFileDir, deviceId), props);
+    }
+    
+    public String getDeviceId() {
+        return deviceId;
+    }
+    
+    public void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
+    }
+    
+    public String getFriendlyName() {
+        return props.getProperty("friendlyName");
+    }
+    
+    public void setFriendlyName(String name) {
+        props.setProperty("friendlyName", name);
     }
 
     public String getToken() {
-        return token;
+        return props.getProperty("token");
     }
 
     public void setToken(String token) {
-        this.token = token;
-        if (token!=null) {
-            users.put(id, token);
+        props.put("token", token);
+        dropbox = new Dropbox(token);
+        save();
+    }
+    
+    public Dropbox getDropbox() {
+        if (dropbox == null) {
+            dropbox = new Dropbox(getToken());
         }
+        return dropbox;
     }
 
     public boolean hasToken() {
-        return token != null;
+        return props.getProperty("token")!=null;
     }
 }

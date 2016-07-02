@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Vector;
 
+import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -28,22 +29,25 @@ public class DirectoryAnimationPanel extends JPanel {
     int delay = 10;
     int distanceX = 80;
     int distanceY = 80;
+    int borderOffset = 5;
 
     File directory = null;
     JFrame display = null;
     Vector<FileLabel> fileLabels = new Vector<FileLabel>();
+    private boolean isSpread = false;
     Point source = null;
 
     private FileLabelTransferHandler transferHandler = new FileLabelTransferHandler();
 
     public DirectoryAnimationPanel() {
 
-        int length = 5;
-        setSize(100 * length, 100 * length);
+        int length = 6;
+        setSize(distanceX * length, distanceX * length);
         setPreferredSize(getSize());
         setLocation(0, 0);
         setLayout(null);
-        setBackground(new Color(100, 100, 100, 0));
+        
+        setBackground(Color.white);
         setVisible(true);
 
         source = // new Point(getWidth() / 2, getHeight() / 2);
@@ -78,6 +82,8 @@ public class DirectoryAnimationPanel extends JPanel {
 
         File[] files = directory.listFiles();
         generateFileLabels(files);
+        
+        spreadDir();
 
         // int length = (int) Math.round(Math.sqrt(files.length)) + 1;
         // // 10;
@@ -99,6 +105,14 @@ public class DirectoryAnimationPanel extends JPanel {
             e.printStackTrace();
         }
     }
+    
+    public void animate() {
+        if (isSpread) {
+            shrinkDir();
+        } else {
+            spreadDir();
+        }
+    }
 
     public void spreadDir() {
         try {
@@ -113,6 +127,7 @@ public class DirectoryAnimationPanel extends JPanel {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        isSpread = true;
     }
 
     public void shrinkDir() {
@@ -128,6 +143,7 @@ public class DirectoryAnimationPanel extends JPanel {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        isSpread = false;
     }
 
     /*
@@ -231,7 +247,8 @@ public class DirectoryAnimationPanel extends JPanel {
 
     private Point computeLabelPosition(int index) {
         int placesPerRow = getWidth() / distanceX;
-        return new Point((index % placesPerRow) * distanceX, (index / placesPerRow) * distanceY);
+        return new Point(borderOffset + ((index % placesPerRow) * distanceX),
+                borderOffset + (index / placesPerRow) * distanceY);
     }
 
     private class FileAnimation extends Thread {

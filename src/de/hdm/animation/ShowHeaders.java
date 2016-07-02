@@ -1,7 +1,7 @@
 package de.hdm.animation;
 
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.Enumeration;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -10,16 +10,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Servlet implementation class FlyingDocs
+ * Servlet implementation class ShowHeaders
  */
-@WebServlet("/FlyingDocs")
-public class FlyingDocs extends HttpServlet {
+@WebServlet("/ShowHeaders")
+public class ShowHeaders extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public FlyingDocs() {
+    public ShowHeaders() {
         super();
         // TODO Auto-generated constructor stub
     }
@@ -28,21 +28,14 @@ public class FlyingDocs extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		ShareSpace.instance();
+		// TODO Auto-generated method stub
+		response.getWriter().append("Served at: ").append(request.getContextPath());
 		
-		response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-        String docType = "<!doctype html public \"-//w3c//dtd html 4.0 " + "transitional//en\">\n";
-
-        out.println(docType);
-        out.println("<html><body>");
-
-        out.println("<h1>Thank you for using FlyingDocs!</h1>");
-        
-        out.println("</body>");
-        out.println("</html>");
-
-        out.close();
+		Enumeration<String> headers = request.getHeaderNames();
+		while (headers.hasMoreElements()) {
+		    String headerName = headers.nextElement();
+		    System.out.println(headerName + ": " + request.getHeader(headerName));
+		}
 	}
 
 	/**
