@@ -20,12 +20,6 @@ public class RegisterSmartphone extends DropboxAccessServlet {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Default constructor.
-     */
-    public RegisterSmartphone() {
-    }
-
-    /**
      * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse
      *      response)
      */

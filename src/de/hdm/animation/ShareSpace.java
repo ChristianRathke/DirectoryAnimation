@@ -58,6 +58,7 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
     private ArrayList<RemoteDevice> tmpCollectedDevices = new ArrayList<RemoteDevice>();
 
     private class DbxButton extends JButton {
+        private static final long serialVersionUID = 1L;
         private User user;
 
         private DbxButton(User u) {
