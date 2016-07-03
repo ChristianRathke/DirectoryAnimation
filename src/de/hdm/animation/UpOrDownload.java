@@ -31,7 +31,7 @@ public class UpOrDownload extends HttpServlet {
             direction = "download";
         }
         String smartphone = request.getParameter("smartphone");
-        if (smartphone == null) {
+        if (smartphone == null & request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if (cookie.getName().equals("smartphone")) {
                     smartphone = cookie.getValue();
