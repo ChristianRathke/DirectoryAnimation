@@ -41,25 +41,10 @@ public class DirectoryAnimationDemo extends JFrame {
     
     
     public static void main(String[] args) {
-        DirectoryAnimationDemo da = new DirectoryAnimationDemo(args.length > 0 ? args[0] : ".\\");
-        try {
-            da.spreadDir();
-            Thread.sleep(2000);
-            da.shrinkDir();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        new DirectoryAnimationDemo(args.length > 0 ? args[0] : ".\\").runAnimation();
     }
     
-    public void shrinkDir() {
-        setVisible(true);
-        toFront();
-        dap.shrinkDir();
-    }
-    
-    public void spreadDir() {
-        setVisible(true);
-        toFront();
-        dap.spreadDir();
+    public void runAnimation() {
+        dap.runAnimation();
     }
 }

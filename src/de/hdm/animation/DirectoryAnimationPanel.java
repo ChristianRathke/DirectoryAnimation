@@ -13,7 +13,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Vector;
 
-import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -37,16 +36,32 @@ public class DirectoryAnimationPanel extends JPanel {
     private boolean isSpread = false;
     Point source = null;
 
+    private int activeFileAnimations = 0;
+
+    // this is used for dropbox actions when animation is not wanted
+    public static DirectoryAnimationPanel placeHolder = new DirectoryAnimationPanel() {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
+
+        public void addFile(File targetFile) {
+        }
+
+        public void shrinkFile(File file) {
+        }
+    };
+
     private FileLabelTransferHandler transferHandler = new FileLabelTransferHandler();
 
     public DirectoryAnimationPanel() {
 
-        int length = 6;
-        setSize(distanceX * length, distanceX * length);
+        int length = 8;
+        setSize(distanceX * length, distanceY * length / 2);
         setPreferredSize(getSize());
         setLocation(0, 0);
         setLayout(null);
-        
+
         setBackground(Color.white);
         setVisible(true);
 
@@ -82,7 +97,7 @@ public class DirectoryAnimationPanel extends JPanel {
 
         File[] files = directory.listFiles();
         generateFileLabels(files);
-        
+
         spreadDir();
 
         // int length = (int) Math.round(Math.sqrt(files.length)) + 1;
@@ -96,17 +111,24 @@ public class DirectoryAnimationPanel extends JPanel {
         display = frame;
     }
 
-    public void runAnimation() {
-        try {
-            spreadDir();
-            Thread.sleep(2000);
-            shrinkDir();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    public synchronized void runAnimation() {
+        waitForInactivity();
+        animate();
+        waitForInactivity();
+        animate();
     }
-    
-    public void animate() {
+
+    private void waitForInactivity() {
+        do {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } while (activeFileAnimations > 0);
+    }
+
+    public synchronized void animate() {
         if (isSpread) {
             shrinkDir();
         } else {
@@ -267,6 +289,8 @@ public class DirectoryAnimationPanel extends JPanel {
         }
 
         public void run() {
+            activeFileAnimations++;
+
             double incrX = (goal.x - start.x) / 100.0;
             double incrY = (goal.y - start.y) / 100.0;
             for (int i = 0; i <= 100; i++) {
@@ -281,6 +305,8 @@ public class DirectoryAnimationPanel extends JPanel {
             }
             label.setVisible(isFinallyVisible);
             display.repaint();
+
+            activeFileAnimations--;
         }
 
     }

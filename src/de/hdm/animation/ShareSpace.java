@@ -28,6 +28,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import com.dropbox.core.DbxException;
@@ -45,34 +46,31 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
     private DirectoryAnimationPanel dap = new DirectoryAnimationPanel();
     private String contextPath = "http://localhost:8080/DirectoryAnimation/";
     private File animationDir = new File(System.getProperty("java.io.tmpdir") + "/animation");
-    private JButton titleButton = new JButton("Animate");
-    private JPanel deviceDownloadButtonPanel = new JPanel();
-    private JPanel deviceUploadButtonPanel = new JPanel();
+    private JButton animateButton = new JButton("Animate");
+    private JPanel devicesPanel = new JPanel();
     private Color backgroundColor = Color.white;
 
-    private Map<String, User> phones = new HashMap<String, User>();
-
-    private Map<RemoteDevice, DbxButton> downloadButtons = new HashMap<RemoteDevice, DbxButton>();
-    private Map<RemoteDevice, DbxButton> uploadButtons = new HashMap<RemoteDevice, DbxButton>();
-
+    private Map<RemoteDevice, JLabel> deviceLabels = new HashMap<RemoteDevice, JLabel>();
     private ArrayList<RemoteDevice> tmpCollectedDevices = new ArrayList<RemoteDevice>();
 
-    private class DbxButton extends JButton {
+    private class DbxLabel extends JLabel {
         private static final long serialVersionUID = 1L;
         private User user;
 
-        private DbxButton(User u) {
-            super(u.getFriendlyName());
+        private DbxLabel(User u) {
             user = u;
             setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+            updateLabelText();
         }
 
-        private boolean isConnected() {
-            return user.hasToken();
-        }
+        private void updateLabelText() {
 
-        private boolean equalsSmartphoneId(String id) {
-            return id.equals(user.getDeviceId());
+            if (user.hasToken()) {
+                setText("<html><body><center>" + user.getName() + "<br>(" + user.getDeviceFriendlyName()
+                        + ")</center></body></html>");
+            } else {
+                setText(user.getDeviceFriendlyName());
+            }
         }
     }
 
@@ -97,7 +95,7 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
 
         });
         add(dap, BorderLayout.CENTER);
-        
+
         try {
             contextPath = "http://" + InetAddress.getLocalHost().getHostAddress() + ":8080/DirectoryAnimation/";
         } catch (UnknownHostException e) {
@@ -105,7 +103,6 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
         }
 
         initializeLabelPanel();
-        initializeSmartphoneList();
 
         pack();
         setLocationRelativeTo(null);
@@ -125,14 +122,14 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
 
     private void initializeLabelPanel() {
 
-        titleButton.addActionListener(new ActionListener() {
+        animateButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 dap.animate();
             }
         });
 
-        JButton clearAnimationDirectory = new JButton("Remove all files");
-        clearAnimationDirectory.addActionListener(new ActionListener() {
+        JButton removeFilesButton = new JButton("Remove all files");
+        removeFilesButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 new Thread() {
                     public void run() {
@@ -143,60 +140,66 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
             }
         });
 
-        JPanel middlePanel = new JPanel();
-        middlePanel.setBackground(backgroundColor);
-        JPanel tmpPanel = new JPanel();
-        tmpPanel.setBackground(backgroundColor);
+        JPanel buttonsPanel = new JPanel();
+        buttonsPanel.setBackground(backgroundColor);
+        JPanel emptyPanel = new JPanel();
+        emptyPanel.setBackground(backgroundColor);
 
-        middlePanel.add(tmpPanel);
-        middlePanel.add(titleButton);
-        middlePanel.add(clearAnimationDirectory);
-        tmpPanel = new JPanel();
-        tmpPanel.setBackground(backgroundColor);
-        middlePanel.add(tmpPanel);
+        buttonsPanel.add(emptyPanel);
+        buttonsPanel.add(animateButton);
+        buttonsPanel.add(removeFilesButton);
+        emptyPanel = new JPanel();
+        emptyPanel.setBackground(backgroundColor);
+        buttonsPanel.add(emptyPanel);
 
-        JPanel comPanel = new JPanel(new BorderLayout());
-        comPanel.setBackground(backgroundColor);
-        comPanel.add(middlePanel, BorderLayout.CENTER);
-        comPanel.add(new QRCode(contextPath + "UpOrDownload?direction=download", 200)
-                .getJPanel("Download"), BorderLayout.WEST);
-        comPanel.add(new QRCode(contextPath + "UpOrDownload?direction=upload", 200)
-                .getJPanel("Upload"), BorderLayout.EAST);
-        add(comPanel, BorderLayout.NORTH);
-    }
+        devicesPanel.setLayout(new BoxLayout(devicesPanel, BoxLayout.PAGE_AXIS));
+        devicesPanel.setBackground(backgroundColor);
 
-    private void initializeSmartphoneList() {
-        deviceDownloadButtonPanel.setLayout(new BoxLayout(deviceDownloadButtonPanel, BoxLayout.PAGE_AXIS));
-        deviceDownloadButtonPanel.setBackground(backgroundColor);
+        JPanel qrCodePanel = new JPanel(new BorderLayout());
+        qrCodePanel.setBackground(backgroundColor);
+        qrCodePanel.add(buttonsPanel, BorderLayout.CENTER);
+        qrCodePanel.add(new QRCode(contextPath + "UpOrDownload?direction=download", 100).getJPanel("Download"),
+                BorderLayout.WEST);
+        // comPanel.add(devicesPanel);
+        add(qrCodePanel, BorderLayout.NORTH);
 
-        deviceUploadButtonPanel.setLayout(new BoxLayout(deviceUploadButtonPanel, BoxLayout.PAGE_AXIS));
-        deviceUploadButtonPanel.setBackground(backgroundColor);
+        qrCodePanel = new JPanel(new BorderLayout());
+        qrCodePanel.setBackground(backgroundColor);
+        qrCodePanel.add(new QRCode(contextPath + "UpOrDownload?direction=upload", 100).getJPanel("Upload"),
+                BorderLayout.EAST);
+        add(qrCodePanel, BorderLayout.SOUTH);
 
-        add(deviceDownloadButtonPanel, BorderLayout.WEST);
-        add(deviceUploadButtonPanel, BorderLayout.EAST);
     }
 
     private void addDeviceButtons(RemoteDevice device) {
         User user = new User(device);
 
-        DbxButton downloadButton = new DbxButton(user);
+        JPanel deviceButtonsPanel = new JPanel(new BorderLayout());
+        deviceButtonsPanel.setBackground(backgroundColor);
+
+        JButton downloadButton = new JButton();
         downloadButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 downloadUserDropbox(user);
             }
         });
-        deviceDownloadButtonPanel.add(downloadButton);
+        downloadButton.setText("Down");
+        deviceButtonsPanel.add(downloadButton, BorderLayout.WEST);
 
-        DbxButton uploadButton = new DbxButton(user);
+        DbxLabel deviceLabel = new DbxLabel(user);
+        deviceButtonsPanel.add(deviceLabel, BorderLayout.CENTER);
+
+        JButton uploadButton = new JButton();
         uploadButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 uploadUserDropbox(user);
             }
         });
-        deviceUploadButtonPanel.add(uploadButton);
+        uploadButton.setText("Up");
+        deviceButtonsPanel.add(uploadButton, BorderLayout.EAST);
 
-        downloadButtons.put(device, downloadButton);
-        uploadButtons.put(device, uploadButton);
+        devicesPanel.add(deviceButtonsPanel);
+        deviceLabels.put(device, deviceLabel);
 
         pack();
     }
@@ -206,20 +209,20 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
             new Thread() {
                 public void run() {
                     try {
-                        titleButton.setText("Downloading ....");
+                        animateButton.setText("Downloading ....");
                         // this will recreate all file labels in the
                         // animation panel
                         dap.reset();
                         user.getDropbox().withAnimationPanel(dap).downloadFiles(animationDir);
-                        titleButton.setText("Animate");
+                        animateButton.setText("Animate");
                     } catch (DbxException e1) {
                         e1.printStackTrace();
                     }
                 }
             }.start();
         } else {
-            System.out.println("User of " + user.getFriendlyName() + " is not registered.");
-            RegisterSmartphoneQR.newInstance(user.getFriendlyName(), user.getDeviceId());
+            System.out.println("User of " + user.getDeviceFriendlyName() + " is not registered.");
+            RegisterSmartphoneQR.newInstance(user.getDeviceFriendlyName(), user.getDeviceId());
         }
     }
 
@@ -228,59 +231,45 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
             new Thread() {
                 public void run() {
                     try {
-                        titleButton.setText("Uploading ....");
+                        animateButton.setText("Uploading ....");
                         user.getDropbox().withAnimationPanel(dap).uploadFiles(animationDir);
                         // this will recreate all file labels in the
                         // animation panel
                         dap.reset();
-                        titleButton.setText("Animate");
+                        animateButton.setText("Animate");
                     } catch (DbxException e1) {
                         e1.printStackTrace();
                     }
                 }
             }.start();
         } else {
-            System.out.println("User of " + user.getFriendlyName() + " is not registered.");
-            RegisterSmartphoneQR.newInstance(user.getFriendlyName(), user.getDeviceId());
+            System.out.println("User of " + user.getDeviceFriendlyName() + " is not registered.");
+            RegisterSmartphoneQR.newInstance(user.getDeviceFriendlyName(), user.getDeviceId());
         }
     }
 
     private void indicateRegistrationStatus(RemoteDevice device) {
-        DbxButton db = downloadButtons.get(device);
-        DbxButton ub = uploadButtons.get(device);
 
-        if (db.user.hasToken()) {
-            try {
-                ub.setText(db.user.getDropbox().getAccount().getName().getFamiliarName());
-                db.setText(db.user.getDropbox().getAccount().getName().getFamiliarName());
-            } catch (DbxException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private void removeDeviceButton(RemoteDevice device) {
-        JButton button = downloadButtons.get(device);
-        deviceDownloadButtonPanel.remove(button);
-        downloadButtons.remove(device);
-
-        button = uploadButtons.get(device);
-        deviceDownloadButtonPanel.remove(button);
-        uploadButtons.remove(device);
+        JLabel label = deviceLabels.get(device);
+        if (label != null) {
+            devicesPanel.remove(label.getParent());
+        }
     }
 
     private void startRemoteDeviceDiscovery() {
         try {
             LocalDevice.getLocalDevice().getDiscoveryAgent().startInquiry(DiscoveryAgent.GIAC, this);
         } catch (BluetoothStateException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
     @Override
     public void deviceDiscovered(RemoteDevice btDevice, DeviceClass arg1) {
-        if (!downloadButtons.containsKey(btDevice)) {
+        if (!deviceLabels.containsKey(btDevice)) {
             this.addDeviceButtons(btDevice);
         }
         tmpCollectedDevices.add(btDevice);
@@ -291,7 +280,7 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
     @Override
     public void inquiryCompleted(int arg0) {
         // System.out.println("Inquiry completed.");
-        for (RemoteDevice shown : downloadButtons.keySet()) {
+        for (RemoteDevice shown : deviceLabels.keySet()) {
             if (!tmpCollectedDevices.contains(shown)) {
                 removeDeviceButton(shown);
             }

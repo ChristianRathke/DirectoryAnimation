@@ -24,11 +24,10 @@ import com.dropbox.core.v2.files.UploadErrorException;
 import com.dropbox.core.v2.users.FullAccount;
 
 import de.hdm.animation.DirectoryAnimationPanel;
-import de.hdm.animation.PlaceHolderAnimationPanel;
 
 public class Dropbox {
     private String accessToken = "";
-    private DirectoryAnimationPanel animationPanel = PlaceHolderAnimationPanel.thePanel;
+    private DirectoryAnimationPanel animationPanel = DirectoryAnimationPanel.placeHolder;
 
     public Dropbox(String accessToken, DirectoryAnimationPanel dap) {
         this(accessToken);

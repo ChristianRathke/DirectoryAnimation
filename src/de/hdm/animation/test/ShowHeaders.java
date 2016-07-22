@@ -1,4 +1,4 @@
-package de.hdm.animation;
+package de.hdm.animation.test;
 
 import java.io.IOException;
 import java.util.Enumeration;

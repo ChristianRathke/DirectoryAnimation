@@ -51,17 +51,22 @@ public class RegisterSmartphone extends DropboxAccessServlet {
         String docType = "<!doctype html public \"-//w3c//dtd html 4.0 " + "transitional//en\">\n";
 
         out.println(docType);
-        out.println("<html><body>");
+        out.println("<html><body style=\"font-size:6vw\">");
 
         out.println("<h2>Authorize Access to HdM's Flying Docs</h2>");
         out.println("<form action=\"StoreAccessToken\" method=\"post\">");
-        out.println("<a href=\"" + authorizeUrl + "\" TARGET=\"_blank\">First get Dropbox authorization code</a>");
+        out.println("<a href=\"" + authorizeUrl + "\" TARGET=\"_blank\">First copy Dropbox authorization code</a>");
         if (direction != null) {
             out.println("<input type=\"hidden\" name=\"direction\" value=\"" + direction + "\" />");
         }
         out.println("<input type=\"hidden\" name=\"smartphone\" value=\"" + smartphone + "\" />");
-        out.println("<p>Then paste Code here:<br> <input type=\"text\" name=\"code\" size=\"60\"/></p>");
-        out.println("<input type=\"submit\" name=\"submit\" value=\"Submit\">");
+        out.println("<p>Then paste Code here:</p> <input type=\"text\" name=\"code\" style=\"font-size: 6vw\" />");
+
+        out.print("<p>Remember me: ");
+        out.print("<input type=\"checkbox\" name=\"rememberme\" value=\"true\" style=\"width:6vw;height:6vw\" />");
+        out.println(" </p>");
+        
+        out.println("<input type=\"submit\" name=\"submit\" value=\"Submit\" style=\"font-size: 6vw\" /> </p>");
         out.println("</form>");
 
         out.println("</body>");

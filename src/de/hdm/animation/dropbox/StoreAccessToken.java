@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -37,6 +38,9 @@ public class StoreAccessToken extends DropboxAccessServlet {
         String code = request.getParameter("code").trim();
         String smartphone = request.getParameter("smartphone");
         String direction = request.getParameter("direction");
+        if (request.getParameter("rememberme")!=null) {
+            response.addCookie(new Cookie("smartphone", smartphone));
+        }
 
         DbxWebAuth webAuth = this.getWebAuth(request);
         DbxAuthFinish authFinish = null;
@@ -56,6 +60,7 @@ public class StoreAccessToken extends DropboxAccessServlet {
             // We have an Dropbox API access token now. This is what will let us
             // make Dropbox API
             // calls. Save it in the database entry for the current user.
+            
             User user = new User(smartphone, authFinish.getAccessToken());
             if (direction != null) {
                 if (direction.equals("download")) {
@@ -79,7 +84,7 @@ public class StoreAccessToken extends DropboxAccessServlet {
         String docType = "<!doctype html public \"-//w3c//dtd html 4.0 " + "transitional//en\">\n";
 
         out.println(docType);
-        out.println("<html><body>");
+        out.println("<html><body><center>");
 
         if (authFinish == null) {
             out.println("<h1>Authorization Incomplete!!!</h1>");
@@ -87,6 +92,7 @@ public class StoreAccessToken extends DropboxAccessServlet {
             out.println("<h1>Authorization Complete</h1>");
         }
 
+        out.println("</center>");
         out.println("</body>");
         out.println("</html>");
 

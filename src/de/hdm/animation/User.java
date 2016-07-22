@@ -10,7 +10,7 @@ import java.util.Properties;
 
 import javax.bluetooth.RemoteDevice;
 
-import com.dropbox.core.v2.DbxClientV2;
+import com.dropbox.core.DbxException;
 
 import de.hdm.animation.dropbox.Dropbox;
 
@@ -38,7 +38,7 @@ public class User {
     public User(RemoteDevice device) {
         this(device.getBluetoothAddress());
         try {
-            setFriendlyName(device.getFriendlyName(false));
+            setDeviceFriendlyName(device.getFriendlyName(false));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -60,12 +60,12 @@ public class User {
         this.deviceId = deviceId;
     }
     
-    public String getFriendlyName() {
-        return props.getProperty("friendlyName");
+    public String getDeviceFriendlyName() {
+        return props.getProperty("deviceFriendlyName");
     }
     
-    public void setFriendlyName(String name) {
-        props.setProperty("friendlyName", name);
+    public void setDeviceFriendlyName(String name) {
+        props.setProperty("deviceFriendlyName", name);
     }
 
     public String getToken() {
@@ -83,6 +83,15 @@ public class User {
             dropbox = new Dropbox(getToken());
         }
         return dropbox;
+    }
+    
+    public String getName() {
+        try {
+            return getDropbox().getAccount().getName().getFamiliarName();
+        } catch (DbxException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public boolean hasToken() {

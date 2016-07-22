@@ -2,7 +2,7 @@
  * Created on 16.06.2016
  *
  */
-package de.hdm.animation.bluetooth;
+package de.hdm.animation.test;
 
 import java.awt.BorderLayout;
 import java.net.InetAddress;
