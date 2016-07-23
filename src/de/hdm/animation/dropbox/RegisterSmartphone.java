@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -45,7 +44,6 @@ public class RegisterSmartphone extends DropboxAccessServlet {
                 .withNoRedirect().build();
         String authorizeUrl = getWebAuth(request).authorize(authRequest);
 
-        response.addCookie(new Cookie("smartphone", smartphone));
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
         String docType = "<!doctype html public \"-//w3c//dtd html 4.0 " + "transitional//en\">\n";
@@ -56,10 +54,12 @@ public class RegisterSmartphone extends DropboxAccessServlet {
         out.println("<h2>Authorize Access to HdM's Flying Docs</h2>");
         out.println("<form action=\"StoreAccessToken\" method=\"post\">");
         out.println("<a href=\"" + authorizeUrl + "\" TARGET=\"_blank\">First copy Dropbox authorization code</a>");
+        
         if (direction != null) {
             out.println("<input type=\"hidden\" name=\"direction\" value=\"" + direction + "\" />");
         }
         out.println("<input type=\"hidden\" name=\"smartphone\" value=\"" + smartphone + "\" />");
+        
         out.println("<p>Then paste Code here:</p> <input type=\"text\" name=\"code\" style=\"font-size: 6vw\" />");
 
         out.print("<p>Remember me: ");

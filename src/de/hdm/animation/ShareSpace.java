@@ -158,14 +158,14 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
         JPanel qrCodePanel = new JPanel(new BorderLayout());
         qrCodePanel.setBackground(backgroundColor);
         qrCodePanel.add(buttonsPanel, BorderLayout.CENTER);
-        qrCodePanel.add(new QRCode(contextPath + "UpOrDownload?direction=download", 100).getJPanel("Download"),
+        qrCodePanel.add(new QRCode(contextPath + "Download", 100).getJPanel("Download"),
                 BorderLayout.WEST);
         // comPanel.add(devicesPanel);
         add(qrCodePanel, BorderLayout.NORTH);
 
         qrCodePanel = new JPanel(new BorderLayout());
         qrCodePanel.setBackground(backgroundColor);
-        qrCodePanel.add(new QRCode(contextPath + "UpOrDownload?direction=upload", 100).getJPanel("Upload"),
+        qrCodePanel.add(new QRCode(contextPath + "Upload", 100).getJPanel("Upload"),
                 BorderLayout.EAST);
         add(qrCodePanel, BorderLayout.SOUTH);
 

@@ -1,7 +1,6 @@
 package de.hdm.animation.dropbox;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -14,7 +13,6 @@ import com.dropbox.core.DbxAuthFinish;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxWebAuth;
 
-import de.hdm.animation.ShareSpace;
 import de.hdm.animation.User;
 
 /**
@@ -38,7 +36,7 @@ public class StoreAccessToken extends DropboxAccessServlet {
         String code = request.getParameter("code").trim();
         String smartphone = request.getParameter("smartphone");
         String direction = request.getParameter("direction");
-        if (request.getParameter("rememberme")!=null) {
+        if (request.getParameter("rememberme") != null) {
             response.addCookie(new Cookie("smartphone", smartphone));
         }
 
@@ -57,46 +55,21 @@ public class StoreAccessToken extends DropboxAccessServlet {
             System.out.println("- User ID: " + authFinish.getUserId());
             System.out.println("- Access Token: " + authFinish.getAccessToken());
 
+            RegisterSmartphoneQR.bluetoothAddressRegistered(smartphone);
+
             // We have an Dropbox API access token now. This is what will let us
             // make Dropbox API
             // calls. Save it in the database entry for the current user.
-            
-            User user = new User(smartphone, authFinish.getAccessToken());
-            if (direction != null) {
-                if (direction.equals("download")) {
-                    ShareSpace.instance().downloadUserDropbox(user);
-                }
-                if (direction.equals("upload")) {
-                    ShareSpace.instance().uploadUserDropbox(user);
-                }
-            }
+
+            User user = (User) request.getSession().getAttribute("user");
+            user.setToken(authFinish.getAccessToken());
         }
-        RegisterSmartphoneQR.bluetoothAddressRegistered(smartphone);
-
-        // try {
-        // new Dropbox(user.getToken(), null).showFiles();
-        // } catch (DbxException e) {
-        // e.printStackTrace();
-        // }
-
-        response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-        String docType = "<!doctype html public \"-//w3c//dtd html 4.0 " + "transitional//en\">\n";
-
-        out.println(docType);
-        out.println("<html><body><center>");
-
-        if (authFinish == null) {
-            out.println("<h1>Authorization Incomplete!!!</h1>");
+        
+        if (direction != null && direction.equals("upload")) {
+            response.sendRedirect("/DirectoryAnimation/Upload");
         } else {
-            out.println("<h1>Authorization Complete</h1>");
+            response.sendRedirect("/DirectoryAnimation/Download");
         }
-
-        out.println("</center>");
-        out.println("</body>");
-        out.println("</html>");
-
-        out.close();
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
