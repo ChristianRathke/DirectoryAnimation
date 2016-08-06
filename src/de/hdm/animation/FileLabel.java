@@ -26,30 +26,32 @@ public class FileLabel extends JLabel implements MouseMotionListener {
     public FileLabel(File file) {
         super(file.getName());
         if (file.getName().length() > 7) {
-            setText(file.getName().substring(0,8));
+            setText(file.getName().substring(0, 8));
         }
         this.file = file;
-        
+
         ShellFolder sf = null;
         try {
             sf = ShellFolder.getShellFolder(file);
+            if (sf != null && sf.getIcon(true) != null) {
+                setIcon(new ImageIcon(sf.getIcon(true), sf.getFolderType()));
+            }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+        } catch (NullPointerException e) {
+            System.err.println("NPE when trying to getShellFolder of " + file.getAbsolutePath());
         }
-        if (sf.getIcon(true) != null) {
-            ImageIcon imageIcon = new ImageIcon(sf.getIcon(true), sf.getFolderType());
-            setIcon(imageIcon);
-            setFont (getFont ().deriveFont (10.0f));
-            setHorizontalAlignment(JLabel.CENTER);
-            setVerticalTextPosition(JLabel.BOTTOM);
-            setHorizontalTextPosition(JLabel.CENTER);
-            setSize(getPreferredSize());
-            setVisible(false);
 
-            addMouseMotionListener(this);
-        }
+        setFont(getFont().deriveFont(10.0f));
+        setHorizontalAlignment(JLabel.CENTER);
+        setVerticalTextPosition(JLabel.BOTTOM);
+        setHorizontalTextPosition(JLabel.CENTER);
+        setSize(getPreferredSize());
+        setVisible(false);
+
+        addMouseMotionListener(this);
     }
-    
+
     public File getFile() {
         return file;
     }
