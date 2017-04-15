@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
  * Servlet implementation class UpDownload
  */
 @WebServlet("/Upload")
-public class Upload extends UpDownload {
+public class Upload extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -22,8 +22,7 @@ public class Upload extends UpDownload {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        assignSessionUser(request);
-        User user = (User) request.getSession().getAttribute("user");
+        User user = Common.assignUserInHttpSession(request);
 
         if (user.hasToken()) {
             ShareSpace.instance().uploadUserDropbox(user);

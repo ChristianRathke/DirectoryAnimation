@@ -52,7 +52,9 @@ public class RegisterSmartphone extends DropboxAccessServlet {
         out.println("<html><body style=\"font-size:6vw\">");
 
         out.println("<h2>Authorize Access to HdM's Flying Docs</h2>");
-        out.println("<form action=\"StoreAccessToken\" method=\"post\">");
+        
+        // User is presented a form to get and store dropbox access token.
+        out.println("<form action=\"StoreAccessTokenForFileTransfer\" method=\"post\">");
         out.println("<a href=\"" + authorizeUrl + "\" TARGET=\"_blank\">First copy Dropbox authorization code</a>");
         
         if (direction != null) {

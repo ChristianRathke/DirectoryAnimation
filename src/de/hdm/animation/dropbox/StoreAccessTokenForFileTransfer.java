@@ -13,13 +13,14 @@ import com.dropbox.core.DbxAuthFinish;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxWebAuth;
 
+import de.hdm.animation.Common;
 import de.hdm.animation.User;
 
 /**
  * Servlet implementation class StoreAccessTokenLocally
  */
-@WebServlet("/StoreAccessToken")
-public class StoreAccessToken extends DropboxAccessServlet {
+@WebServlet("/StoreAccessTokenForFileTransfer")
+public class StoreAccessTokenForFileTransfer extends DropboxAccessServlet {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -58,13 +59,13 @@ public class StoreAccessToken extends DropboxAccessServlet {
             RegisterSmartphoneQR.bluetoothAddressRegistered(smartphone);
 
             // We have an Dropbox API access token now. This is what will let us
-            // make Dropbox API
-            // calls. Save it in the database entry for the current user.
+            // make Dropbox API calls. Save it in the database entry for the
+            // current user.
 
-            User user = (User) request.getSession().getAttribute("user");
+            User user = Common.assignUserInHttpSession(request);
             user.setToken(authFinish.getAccessToken());
         }
-        
+
         if (direction != null && direction.equals("upload")) {
             response.sendRedirect("/DirectoryAnimation/Upload");
         } else {
@@ -74,7 +75,6 @@ public class StoreAccessToken extends DropboxAccessServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // TODO Auto-generated method stub
         doGet(request, response);
     }
 

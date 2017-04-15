@@ -152,22 +152,18 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
         emptyPanel.setBackground(backgroundColor);
         buttonsPanel.add(emptyPanel);
 
-        devicesPanel.setLayout(new BoxLayout(devicesPanel, BoxLayout.PAGE_AXIS));
-        devicesPanel.setBackground(backgroundColor);
-
         JPanel qrCodePanel = new JPanel(new BorderLayout());
         qrCodePanel.setBackground(backgroundColor);
         qrCodePanel.add(buttonsPanel, BorderLayout.CENTER);
-        qrCodePanel.add(new QRCode(contextPath + "Download", 100).getJPanel("Download"),
+        qrCodePanel.add(new QRCode(contextPath + "Download", 200).getJPanel("Download from Dropbox"),
+                BorderLayout.EAST);
+        qrCodePanel.add(new QRCode(contextPath + "Upload", 200).getJPanel("Upload to Dropbox"),
                 BorderLayout.WEST);
-        // comPanel.add(devicesPanel);
         add(qrCodePanel, BorderLayout.NORTH);
 
-        qrCodePanel = new JPanel(new BorderLayout());
-        qrCodePanel.setBackground(backgroundColor);
-        qrCodePanel.add(new QRCode(contextPath + "Upload", 100).getJPanel("Upload"),
-                BorderLayout.EAST);
-        add(qrCodePanel, BorderLayout.SOUTH);
+        devicesPanel.setLayout(new BoxLayout(devicesPanel, BoxLayout.PAGE_AXIS));
+        devicesPanel.setBackground(backgroundColor);
+        add(devicesPanel, BorderLayout.SOUTH);
 
     }
 
@@ -184,7 +180,7 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
             }
         });
         downloadButton.setText("Down");
-        deviceButtonsPanel.add(downloadButton, BorderLayout.WEST);
+        deviceButtonsPanel.add(downloadButton, BorderLayout.EAST);
 
         DbxLabel deviceLabel = new DbxLabel(user);
         deviceButtonsPanel.add(deviceLabel, BorderLayout.CENTER);
@@ -196,7 +192,7 @@ public class ShareSpace extends JFrame implements DiscoveryListener {
             }
         });
         uploadButton.setText("Up");
-        deviceButtonsPanel.add(uploadButton, BorderLayout.EAST);
+        deviceButtonsPanel.add(uploadButton, BorderLayout.WEST);
 
         devicesPanel.add(deviceButtonsPanel);
         deviceLabels.put(device, deviceLabel);

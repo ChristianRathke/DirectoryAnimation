@@ -11,8 +11,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.InvalidPropertiesFormatException;
 import java.util.Properties;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 
 public class Common {
 
@@ -46,6 +52,38 @@ public class Common {
             e.printStackTrace();
         }
 
+    }
+    
+    public static User assignUserInHttpSession(HttpServletRequest request)
+            throws ServletException, IOException {
+        
+        User user = (User) request.getSession().getAttribute("user");
+        // return session user if already present
+        if (user != null){
+            return user;
+        }
+
+        String smartphoneId = request.getParameter("smartphone");
+        
+        // look for "smartphone" cookie if smartphone id has not been provided
+        if (smartphoneId == null & request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if (cookie.getName().equals("smartphone")) {
+                    smartphoneId = cookie.getValue();
+                    break;
+                }
+            }
+        }
+        
+        // invent an arbitrary smartphone id
+        if (smartphoneId == null) {
+            smartphoneId = new BigInteger(130, new SecureRandom()).toString();
+        }
+        
+        // create user object and store it with current session
+        user = new User(smartphoneId);
+        request.getSession().setAttribute("user", user);
+        return user;
     }
 
 }

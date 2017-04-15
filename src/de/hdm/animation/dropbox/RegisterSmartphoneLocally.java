@@ -10,8 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.dropbox.core.DbxWebAuth;
 
-import de.hdm.animation.User;
-
 /**
  * Servlet implementation class RegisterSmartphoneLocally
  */
@@ -46,8 +44,6 @@ public class RegisterSmartphoneLocally extends DropboxAccessServlet {
         if (smartphone == null) {
             return;
         }
-        
-        request.getSession().setAttribute("user", new User(smartphone));
 
         // Start the authorization process with Dropbox.
         DbxWebAuth.Request authRequest = DbxWebAuth.newRequestBuilder()
