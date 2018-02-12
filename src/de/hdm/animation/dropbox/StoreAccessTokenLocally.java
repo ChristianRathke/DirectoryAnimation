@@ -12,6 +12,7 @@ import com.dropbox.core.DbxAuthFinish;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxWebAuth;
 
+import de.hdm.animation.Common;
 import de.hdm.animation.User;
 
 /**
@@ -70,7 +71,7 @@ public class StoreAccessTokenLocally extends DropboxAccessServlet {
         // We have an Dropbox API access token now. This is what will let us
         // make Dropbox API
         // calls. Save it in the database entry for the current user.
-        User user = (User) request.getSession().getAttribute("user");
+        User user = Common.assignUserInHttpSession(request);
         user.setToken(authFinish.getAccessToken());
 
         try {

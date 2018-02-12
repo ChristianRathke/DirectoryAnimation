@@ -17,7 +17,7 @@ import de.hdm.animation.Common;
 import de.hdm.animation.User;
 
 /**
- * Servlet implementation class StoreAccessTokenLocally
+ * Servlet implementation class StoreAccessToken
  */
 @WebServlet("/StoreAccessTokenForFileTransfer")
 public class StoreAccessTokenForFileTransfer extends DropboxAccessServlet {
@@ -56,14 +56,15 @@ public class StoreAccessTokenForFileTransfer extends DropboxAccessServlet {
             System.out.println("- User ID: " + authFinish.getUserId());
             System.out.println("- Access Token: " + authFinish.getAccessToken());
 
-            RegisterSmartphoneQR.bluetoothAddressRegistered(smartphone);
-
             // We have an Dropbox API access token now. This is what will let us
             // make Dropbox API calls. Save it in the database entry for the
             // current user.
 
             User user = Common.assignUserInHttpSession(request);
             user.setToken(authFinish.getAccessToken());
+
+            // this will close an open qr-code-window from which registration was initiated
+            RegisterSmartphoneQR.bluetoothAddressRegistered(smartphone);
         }
 
         if (direction != null && direction.equals("upload")) {
