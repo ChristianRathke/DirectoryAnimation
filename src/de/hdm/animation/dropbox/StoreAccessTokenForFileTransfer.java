@@ -28,7 +28,7 @@ public class StoreAccessTokenForFileTransfer extends DropboxAccessServlet {
      *      response)
      */
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {// -------------------------------------------------------------------------------------------
+            throws IOException {// -------------------------------------------------------------------------------------------
         // POST /StoreAccessTokenLocally
         // -------------------------------------------------------------------------------------------
         // this includes the access token pasted from the dropbox authorization

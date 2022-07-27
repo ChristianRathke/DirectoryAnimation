@@ -20,7 +20,7 @@ public class Download extends HttpServlet {
      *      response)
      */
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws IOException {
 
         
         User user = Common.assignUserInHttpSession(request);
@@ -39,7 +39,7 @@ public class Download extends HttpServlet {
      *      response)
      */
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws IOException {
         doGet(request, response);
     }
 

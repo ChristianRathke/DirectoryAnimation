@@ -27,7 +27,7 @@ public class StoreAccessTokenLocally extends DropboxAccessServlet {
      *      response)
      */
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {// -------------------------------------------------------------------------------------------
+            throws IOException {// -------------------------------------------------------------------------------------------
         // GET /StoreAccessTokenLocally
         // -------------------------------------------------------------------------------------------
         // The Dropbox API authorization page will redirect the user's browser

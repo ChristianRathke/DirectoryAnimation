@@ -20,16 +20,11 @@ public class User {
      * dropbox access tokens.
      */
     
-    private File appFileDir = new File(System.getenv("appdata") +  "/HdMSharingApp");
-    private String deviceId;
+    private final File appFileDir = new File(System.getenv("appdata") +  "/HdMSharingApp");
+    private final String deviceId;
     private Dropbox dropbox;
-    private Properties props = new Properties();
-    
-    public User(String deviceId, String token) {
-        this(deviceId);
-        setToken(token);
-    }
-    
+    private final Properties props = new Properties();
+
     public User(String deviceId) {
         this.deviceId = deviceId;
         loadProps();
@@ -55,11 +50,7 @@ public class User {
     public String getDeviceId() {
         return deviceId;
     }
-    
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
-    
+
     public String getDeviceFriendlyName() {
         return props.getProperty("deviceFriendlyName");
     }

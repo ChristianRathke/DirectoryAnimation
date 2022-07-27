@@ -8,7 +8,10 @@
           <element id="module-output" name="DirectoryAnimation" />
         </element>
         <element id="directory" name="lib">
-          <element id="library" level="project" name="lib" />
+          <element id="library" level="project" name="io.ultreia.bluecove" />
+          <element id="library" level="project" name="javax.servlet.api" />
+          <element id="library" level="project" name="google.zxing.core" />
+          <element id="library" level="project" name="dropbox.core.sdk" />
         </element>
       </element>
     </root>

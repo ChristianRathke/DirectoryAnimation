@@ -9,6 +9,7 @@
         <webroots>
           <root url="file://$MODULE_DIR$/WebContent" relative="/" />
         </webroots>
+        <sourceRoots />
       </configuration>
     </facet>
     <facet type="app-engine-standard" name="Google App Engine Standard">
@@ -22,8 +23,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="lib" level="project" />
-    <orderEntry type="library" name="servlet-api" level="project" />
-    <orderEntry type="library" name="Maven: javax.servlet:servlet-api:2.5" level="project" />
+    <orderEntry type="library" name="io.ultreia.bluecove" level="project" />
+    <orderEntry type="library" name="javax.servlet.api" level="project" />
+    <orderEntry type="library" name="google.zxing.core" level="project" />
+    <orderEntry type="library" name="dropbox.core.sdk" level="project" />
   </component>
 </module>

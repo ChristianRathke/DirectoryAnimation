@@ -4,67 +4,55 @@
  */
 package de.hdm.animation;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.math.BigInteger;
-import java.security.SecureRandom;
-import java.util.InvalidPropertiesFormatException;
-import java.util.Properties;
-
-import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import java.io.*;
+import java.math.BigInteger;
+import java.nio.file.Files;
+import java.security.SecureRandom;
+import java.util.Properties;
 
 public class Common {
 
     public static void loadXMLFile(File file, Properties props) {
-        /**
-         * Get properties from xml file and convert key-value-pairs to props
+        /*
+          Get properties from xml file and convert key-value-pairs to props
          */
         try {
             InputStream inputStream = new FileInputStream(file);
             props.loadFromXML(inputStream);
             inputStream.close();
 
-        } catch (FileNotFoundException fnfe) {
-        } catch (InvalidPropertiesFormatException ipfe) {
+        } catch (FileNotFoundException ignored) {
+        } catch (IOException ipfe) {
             ipfe.printStackTrace();
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
         }
     }
 
     public static void saveXMLFile(File file, Properties props) {
         OutputStream outputStream;
         try {
-            file.getParentFile().mkdirs();
-            outputStream = new FileOutputStream(file);
-            props.storeToXML(outputStream, null);
-            outputStream.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            if (file.getParentFile().mkdirs()) {
+                outputStream = Files.newOutputStream(file.toPath());
+                props.storeToXML(outputStream, null);
+                outputStream.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
     }
-    
-    public static User assignUserInHttpSession(HttpServletRequest request)
-            throws ServletException, IOException {
-        
+
+    public static User assignUserInHttpSession(HttpServletRequest request) {
+
         User user = (User) request.getSession().getAttribute("user");
         // return session user if already present
-        if (user != null){
+        if (user != null) {
             return user;
         }
 
         String smartphoneId = request.getParameter("smartphone");
-        
+
         // look for "smartphone" cookie if smartphone id has not been provided
         if (smartphoneId == null & request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
@@ -74,12 +62,12 @@ public class Common {
                 }
             }
         }
-        
+
         // invent an arbitrary smartphone id
         if (smartphoneId == null) {
             smartphoneId = new BigInteger(130, new SecureRandom()).toString();
         }
-        
+
         // create user object and store it with current session
         user = new User(smartphoneId);
         request.getSession().setAttribute("user", user);
